@@ -2,7 +2,7 @@ export const lightTheme = {
   colors: {
     background: '#FFFFFF',
     text: '#000000',
-    primary: '#FF5500', // SoundCloud orange
+    primary: '#FF5500',
     secondary: '#999999',
     accent: '#FF5500',
     border: '#E5E5E5',
@@ -18,7 +18,7 @@ export const darkTheme = {
   colors: {
     background: '#121212',
     text: '#FFFFFF',
-    primary: '#FF5500', // SoundCloud orange
+    primary: '#FF5500',
     secondary: '#AAAAAA',
     accent: '#FF5500',
     border: '#333333',

@@ -131,10 +131,10 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 0,
     width: '100%',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
   },
   rightActionButtons: {
     flexDirection: 'row',

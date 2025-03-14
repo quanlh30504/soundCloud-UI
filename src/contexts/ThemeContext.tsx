@@ -13,11 +13,10 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemTheme = useColorScheme() || 'dark';
-  const [themeMode, setThemeMode] = useState<ThemeMode>('dark'); // Default to dark
+  const [themeMode, setThemeMode] = useState<ThemeMode>('dark');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
-    // Apply theme based on mode
     if (themeMode === 'system') {
       setTheme(systemTheme);
     } else {
