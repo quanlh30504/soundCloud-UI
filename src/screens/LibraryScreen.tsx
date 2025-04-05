@@ -64,12 +64,12 @@ export default function LibraryScreen() {
           <TouchableOpacity style={styles.iconButton}>
             <Ionicons name="tv-outline" size={24} color={themeStyles.colors.icon} />
           </TouchableOpacity>
-          <TouchableOpacity 
+          {/* <TouchableOpacity 
             style={styles.iconButton}
             onPress={() => navigation.navigate('Settings')}
           >
             <Ionicons name="settings-outline" size={24} color={themeStyles.colors.icon} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity 
             style={styles.avatar}
             onPress={() => navigation.navigate('Profile')}

@@ -13,6 +13,7 @@ import { auth, googleProvider } from "../../config/firebase";
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { Ionicons } from '@expo/vector-icons';
+import {storageService} from "../../services/storage";
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'> & {
   setAuthenticated: (value: boolean) => void;
@@ -31,12 +32,32 @@ export default function LoginScreen({ navigation, setAuthenticated }: { navigati
 
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Lấy token từ Firebase
+      const token = await user.getIdToken();
+      
+      // Lưu token vào AsyncStorage
+      await storageService.setAuthToken(token);
+      
+      // Lưu thông tin user
+      const userData = {
+        firebaseUid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || '',
+        avatarUrl: user.photoURL || ''
+      };
+      await storageService.setUserData(userData);
+
       setAuthenticated(true);
     } catch (error: any) {
+      console.error('Login error:', error);
       let errorMessage = 'Login failed';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         errorMessage = 'Invalid email or password';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later';
       }
       Alert.alert('Error', errorMessage);
     } finally {
@@ -47,9 +68,27 @@ export default function LoginScreen({ navigation, setAuthenticated }: { navigati
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      // Lấy token từ Firebase
+      const token = await user.getIdToken();
+      
+      // Lưu token vào AsyncStorage
+      await storageService.setAuthToken(token);
+      
+      // Lưu thông tin user
+      const userData = {
+        firebaseUid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || '',
+        avatarUrl: user.photoURL || ''
+      };
+      await storageService.setUserData(userData);
+
       setAuthenticated(true);
     } catch (error: any) {
+      console.error('Google login error:', error);
       Alert.alert('Error', 'Google login failed. Please try again.');
     } finally {
       setLoading(false);

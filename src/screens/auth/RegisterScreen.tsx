@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../../config/firebase';
-import { registerUser } from '../../services/authService';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { Ionicons } from '@expo/vector-icons';
+import { authApi } from '../../services/api';
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'> & {
   setAuthenticated: (value: boolean) => void;
@@ -41,7 +41,7 @@ export default function RegisterScreen({ navigation, setAuthenticated }: { navig
         avatarUrl: '' // Có thể thêm sau
       };
 
-      await registerUser(userData);
+      await authApi.syncUser(userData);
       setAuthenticated(true);
     } catch (error: any) {
       let errorMessage = 'Registration failed';
@@ -70,7 +70,7 @@ export default function RegisterScreen({ navigation, setAuthenticated }: { navig
         avatarUrl: user.photoURL || ''
       };
 
-      await registerUser(userData);
+      await authApi.syncUser(userData);
       setAuthenticated(true);
     } catch (error: any) {
       Alert.alert('Error', 'Google sign up failed. Please try again.');

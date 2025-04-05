@@ -5,6 +5,10 @@ import { RootStackParamList } from './types';
 import { useTheme } from '../contexts/ThemeContext';
 import { darkTheme, lightTheme } from '../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { TouchableOpacity, Text, Alert } from 'react-native';
+import { auth } from '../config/firebase';
+import { signOut } from 'firebase/auth';
+import { storageService } from '../services/storage';
 
 import HomeScreen from '../screens/HomeScreen';
 import FeedScreen from '../screens/FeedScreen';
@@ -39,7 +43,7 @@ const LibraryStackScreen = () => {
   );
 };
 
-export default function BottomTabNavigator() {
+export default function BottomTabNavigator({ setAuthenticated }: { setAuthenticated: React.Dispatch<React.SetStateAction<boolean | null>> }) {
   const { theme } = useTheme();
   const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
 
@@ -53,7 +57,10 @@ export default function BottomTabNavigator() {
           backgroundColor: themeStyles.colors.tabBar,
           borderTopColor: themeStyles.colors.border,
         },
-        headerShown: false,
+        headerStyle: {
+          backgroundColor: themeStyles.colors.background,
+        },
+        headerTintColor: themeStyles.colors.text,
       }}
     >
       <Tab.Screen
@@ -101,6 +108,16 @@ export default function BottomTabNavigator() {
           ),
         }}
       />
+      <Tab.Screen 
+        name="Settings" 
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
+          ),
+        }}
+      >
+        {(props) => <SettingsScreen {...props} setAuthenticated={setAuthenticated} />}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 }

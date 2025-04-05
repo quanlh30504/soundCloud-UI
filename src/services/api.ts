@@ -1,4 +1,5 @@
 import axiosInstance from '../config/axios';
+import { User } from '../types/user';
 
 // User API
 export const userApi = {
@@ -70,4 +71,31 @@ export const searchApi = {
   // Tìm kiếm
   search: (query: string, params?: any) => 
     axiosInstance.get('/search', { params: { q: query, ...params } }),
+};
+
+// Auth API
+export const authApi = {
+  // Đăng ký người dùng mới
+  syncUser: async (userData: User) => {
+    try {
+      const response = await axiosInstance.post('/users/sync', userData);
+      return response.data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
+  },
+
+  // Lấy thông tin người dùng bằng Firebase UID
+  getUserByFirebaseUid: async (firebaseUid: string) => {
+    try {
+      const response = await axiosInstance.get('/auth/user', {
+        params: { firebaseUid }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Get user error:', error);
+      throw error;
+    }
+  }
 }; 
