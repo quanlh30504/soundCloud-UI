@@ -14,7 +14,6 @@ import UpgradeScreen from '../screens/UpgradeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import LikedTracksScreen from '../screens/LikedTracksScreen';
 import PlaylistsScreen from '../screens/PlaylistsScreen';
-import AlbumsScreen from '../screens/AlbumsScreen';
 import FollowingScreen from '../screens/FollowingScreen';
 import StationsScreen from '../screens/StationsScreen';
 import YourUploadsScreen from '../screens/YourUploadsScreen';
@@ -30,7 +29,6 @@ const LibraryStackScreen = () => {
       <LibraryStack.Screen name="Settings" component={SettingsScreen} />
       <LibraryStack.Screen name="LikedTracks" component={LikedTracksScreen} />
       <LibraryStack.Screen name="Playlists" component={PlaylistsScreen} />
-      <LibraryStack.Screen name="Albums" component={AlbumsScreen} />
       <LibraryStack.Screen name="Following" component={FollowingScreen} />
       <LibraryStack.Screen name="Stations" component={StationsScreen} />
       <LibraryStack.Screen name="YourUploads" component={YourUploadsScreen} />
