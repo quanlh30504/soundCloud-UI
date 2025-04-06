@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../contexts/ThemeContext';
-import { darkTheme, lightTheme } from '../theme/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { darkTheme, lightTheme } from '../../config/theme';
 
 export default function FeedScreen() {
   const { theme } = useTheme();

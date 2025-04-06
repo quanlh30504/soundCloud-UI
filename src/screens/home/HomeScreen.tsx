@@ -1,12 +1,12 @@
 import React from "react";
 import {View,Text,StyleSheet,ScrollView,Image,TouchableOpacity,ImageBackground,} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../contexts/ThemeContext";
-import { darkTheme } from "../theme/theme";
+import { useTheme } from "../../contexts/ThemeContext";
+import { darkTheme } from "../../config/theme";
 import Icon from "react-native-vector-icons/Ionicons";
-import trackPlayerService from "../services/TrackPlayerService";
-import { recommendedTracks, buzzingCategories } from "../data/sampleData";
-import { albums } from "../data/albumData";
+import trackPlayerService from "../../services/player/TrackPlayerService";
+import { recommendedTracks, buzzingCategories } from "../../data/mockData";
+import { albums } from "../../data/albums";
 
 
 export default function HomeScreen({ navigation }) {
@@ -114,7 +114,7 @@ export default function HomeScreen({ navigation }) {
         {/* Fresh Music Friday Section */}
         <View style={styles.featuredSection}>
           <ImageBackground
-            source={require("../../assets/images/avicii.jpg")}
+            source={require("../../../assets/images/avicii.jpg")}
             style={styles.featuredBackground}
             imageStyle={styles.featuredImage}
           >

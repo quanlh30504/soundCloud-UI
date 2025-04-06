@@ -11,8 +11,8 @@ import {
 import Slider from "@react-native-community/slider";
 import TrackPlayer, { useProgress, useTrackPlayerEvents, Event } from "react-native-track-player";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useTheme } from "../contexts/ThemeContext";
-import trackPlayerService, { TrackInfo } from "../services/TrackPlayerService";
+import { useTheme } from "../../contexts/ThemeContext";
+import trackPlayerService, { TrackInfo } from "../../services/player/TrackPlayerService";
 
 const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
   const { theme } = useTheme();

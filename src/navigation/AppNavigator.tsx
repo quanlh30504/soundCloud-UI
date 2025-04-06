@@ -4,14 +4,14 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { RootStackParamList } from "./types";
 import BottomTabNavigator from "./BottomTabNavigator";
-import MusicPlayerScreen from "../screens/MusicPlayerScreen";
-import trackPlayerService from "../services/TrackPlayerService";
-import { navigationRef } from "../services/NavigationService";
+import MusicPlayerScreen from "../screens/player/MusicPlayerScreen";
+import trackPlayerService from "../services/player/TrackPlayerService";
+import { navigationRef } from "../services/navigation/NavigationService";
 import { useTheme } from "../contexts/ThemeContext";
-import { darkTheme, lightTheme } from "../theme/theme";
-import AlbumDetailScreen from "../screens/AlbumDetailScreen";
+import { darkTheme, lightTheme } from "../config/theme";
+import AlbumDetailScreen from "../screens/album/AlbumDetailScreen";
 // Import the MiniPlayerBar
-import MiniPlayerBar from "../screens/MiniPlayerBar";
+import MiniPlayerBar from "../components/common/MiniPlayerBar";
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 

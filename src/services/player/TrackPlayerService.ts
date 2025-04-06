@@ -1,5 +1,5 @@
 import TrackPlayer, { Capability, Event, RepeatMode, State, Track } from "react-native-track-player";
-import { sampleTracks } from "../data/sampleTracks";
+import { sampleTracks } from "../../data/tracks/sampleTracks";
 
 export interface TrackInfo {
   title: string;

@@ -8,8 +8,8 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useProgress, useTrackPlayerEvents, Event } from 'react-native-track-player';
-import trackPlayerService from '../services/TrackPlayerService';
-import NavigationService from '../services/NavigationService';
+import trackPlayerService from '../../../services/player/TrackPlayerService';
+import NavigationService from '../../../services/navigation/NavigationService';
 
 const MiniPlayerBar = () => {
   const [trackInfo, setTrackInfo] = useState({ title: "", artist: "", artwork: null });
