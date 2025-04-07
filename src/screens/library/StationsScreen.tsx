@@ -1,19 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../contexts/ThemeContext';
-import { darkTheme, lightTheme } from '../theme/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { darkTheme, lightTheme } from '../../config/theme';
 
-export default function AlbumsScreen() {
+export default function StationsScreen() {
   const { theme } = useTheme();
   const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>
       <View style={styles.content}>
-        <Text style={[styles.title, { color: themeStyles.colors.text }]}>Albums</Text>
+        <Text style={[styles.title, { color: themeStyles.colors.text }]}>Stations</Text>
         <Text style={[styles.subtitle, { color: themeStyles.colors.secondary }]}>
-          This is the Albums screen
+          This is the Stations screen
         </Text>
       </View>
     </SafeAreaView>

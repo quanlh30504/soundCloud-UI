@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useTheme } from '../contexts/ThemeContext';
-import { darkTheme, lightTheme } from '../theme/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { darkTheme, lightTheme } from '../../config/theme';
 
 export default function ProfileScreen() {
   const navigation = useNavigation();

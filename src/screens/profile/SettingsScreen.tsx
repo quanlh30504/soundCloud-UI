@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useTheme } from '../contexts/ThemeContext';
-import { darkTheme, lightTheme } from '../theme/theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { darkTheme, lightTheme } from '../../config/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const SettingItem = ({ title }: { title: string }) => {
