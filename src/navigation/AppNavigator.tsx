@@ -113,9 +113,10 @@ export default function AppNavigator({
             </>
           )}
         </RootStack.Navigator>
-        
-        {/* Add the MiniPlayerBar here */}
-        <MiniPlayerBar />
+        {isAuthenticated ? (
+          <MiniPlayerBar />
+        ) : null}
+
       </View>
     </NavigationContainer>
   );
