@@ -20,6 +20,11 @@ export type RootStackParamList = {
   AlbumDetail: {
     album: Album;
   };
+
+  Welcome: undefined;
+  Login: undefined;
+  Register: undefined;
+  Main: undefined;
 };
 
 export type Album = {

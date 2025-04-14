@@ -1,9 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { darkTheme, lightTheme } from '../../config/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { auth } from '../../config/firebase';
+import { signOut } from 'firebase/auth';
+import { storageService } from '../../services/storage';
 
 const SettingItem = ({ title }: { title: string }) => {
   const { theme } = useTheme();
@@ -19,21 +22,32 @@ const SettingItem = ({ title }: { title: string }) => {
   );
 };
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ setAuthenticated }: { setAuthenticated: React.Dispatch<React.SetStateAction<boolean | null>> }) {
   const { theme } = useTheme();
   const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
   const navigation = useNavigation();
+
+  const handleSignOut = async () => {
+    try {
+      // Đăng xuất khỏi Firebase
+      await signOut(auth);
+      
+      // Xóa token và thông tin user khỏi AsyncStorage
+      await storageService.removeAuthToken();
+      await storageService.removeUserData();
+      
+      // Cập nhật trạng thái đăng nhập
+      setAuthenticated(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={themeStyles.colors.text} />
-        </TouchableOpacity>
         <Text style={[styles.title, { color: themeStyles.colors.text }]}>Settings</Text>
         <TouchableOpacity style={styles.iconButton}>
           <Ionicons name="tv-outline" size={24} color={themeStyles.colors.icon} />
@@ -56,8 +70,11 @@ export default function SettingsScreen() {
         <SettingItem title="Legal" />
         
         <View style={styles.signOutContainer}>
-          <TouchableOpacity style={styles.signOutButton}>
-            <Text style={styles.signOutText}>Sign out</Text>
+          <TouchableOpacity 
+            style={[styles.signOutButton, { backgroundColor: themeStyles.colors.background }]}
+            onPress={handleSignOut}
+          >
+            <Text style={[styles.signOutText, { color: 'red' }]}>Sign out</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
