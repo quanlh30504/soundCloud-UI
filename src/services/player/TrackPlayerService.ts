@@ -33,7 +33,7 @@ class TrackPlayerService {
         ],
       });
       
-      await this.loadSampleTracks();
+      // await this.loadSampleTracks();
       
       this.isInitialized = true;
       return true;
@@ -121,28 +121,85 @@ class TrackPlayerService {
     }
   }
 
+  // public async playTrack(trackId: string): Promise<void> {
+  //   try {
+  //     await this.loadSampleTracks();
+      
+  //     const queue = await TrackPlayer.getQueue();
+  //     const trackIndex = queue.findIndex((track) => track.id === trackId);
+      
+  //     if (trackIndex > -1) {
+  //       await TrackPlayer.skip(trackIndex);
+  //       await TrackPlayer.play();
+  //     } else {
+  //       console.warn("Track not found:", trackId);
+  //       if (queue.length > 0) {
+  //         await TrackPlayer.skip(0);
+  //         await TrackPlayer.play();
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error playing track:", error);
+  //   }
+  // }
+
   public async playTrack(trackId: string): Promise<void> {
     try {
-      await this.loadSampleTracks();
+      if (!trackId) {
+        console.error('Cannot play track: trackId is undefined or null');
+        return;
+      }
+      
+      console.log(`Attempting to play track with ID: ${trackId}`);
+      
+      if (!this.isInitialized) {
+        const setupSuccess = await this.setup();
+        if (!setupSuccess) {
+          console.error('Failed to initialize player when playing track');
+          return;
+        }
+      }
       
       const queue = await TrackPlayer.getQueue();
-      const trackIndex = queue.findIndex((track) => track.id === trackId);
+      console.log(`Current queue has ${queue.length} tracks`);
+      
+      const trackIndex = queue.findIndex((track) => 
+        track.id === trackId || 
+        (track.metadata && track.metadata.spotifyId === trackId)
+      );
+      console.log(`Track index in queue: ${trackIndex}`);
       
       if (trackIndex > -1) {
         await TrackPlayer.skip(trackIndex);
         await TrackPlayer.play();
+        console.log(`Skipped to track at index ${trackIndex} and started playback`);
       } else {
-        console.warn("Track not found:", trackId);
-        if (queue.length > 0) {
+        console.warn(`Track with ID ${trackId} not found in queue`);
+        
+        if (queue.length === 0) {
+          console.warn('Queue is empty, no fallback track to play');
+        } else {
           await TrackPlayer.skip(0);
           await TrackPlayer.play();
+          console.log('Playing first track in queue as fallback');
         }
       }
+      
+      const playerState = await TrackPlayer.getState();
+      console.log(`Player state after playTrack: ${playerState}`);
+      
     } catch (error) {
       console.error("Error playing track:", error);
+      
+      try {
+        await this.setup();
+        console.log('Re-initialized player after error');
+      } catch (e) {
+        console.error('Could not recover player:', e);
+      }
     }
   }
-
+  
   public async toggleRepeatMode(): Promise<number> {
     try {
       const currentMode = await TrackPlayer.getRepeatMode();

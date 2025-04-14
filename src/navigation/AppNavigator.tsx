@@ -14,10 +14,12 @@ import MiniPlayerBar from "../components/common/MiniPlayerBar";
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
+import SearchResultsScreen from '../screens/search/SearchResultsScreen';
 import { storageService } from '../services/storage';
 import { auth } from '../config/firebase';
 import { signOut } from 'firebase/auth';
 
+const MainStack = createNativeStackNavigator();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator({ 
@@ -52,7 +54,6 @@ export default function AppNavigator({
       try {
         const isSetup = await trackPlayerService.setup();
         if (isSetup) {
-          await trackPlayerService.addTracks();
           setIsPlayerReady(true);
           console.log("Music player initialized successfully");
         }
@@ -65,8 +66,32 @@ export default function AppNavigator({
     setupPlayer();
   }, []);
 
+  const MainStackScreen = ({ 
+    setAuthenticated 
+  }: { 
+    setAuthenticated: React.Dispatch<React.SetStateAction<boolean | null>>;
+  }) => {
+    return (
+      <View style={styles.container}>
+        <MainStack.Navigator 
+          screenOptions={{ 
+            headerShown: false,
+            contentStyle: { flex: 1 }
+          }}
+        >
+          <MainStack.Screen name="BottomTabs">
+            {(props) => <BottomTabNavigator {...props} setAuthenticated={setAuthenticated} />}
+          </MainStack.Screen>
+          <MainStack.Screen name="AlbumDetail" component={AlbumDetailScreen} />
+          <MainStack.Screen name="SearchResults" component={SearchResultsScreen} /> 
+        </MainStack.Navigator>
+        
+        <MiniPlayerBar />
+      </View>
+    );
+  };
+
   if (!isPlayerReady) {
-    // You could return a loading component here
     return null;
   }
 
@@ -85,7 +110,6 @@ export default function AppNavigator({
       {/* Wrap with a View to position mini player */}
       <View style={{ flex: 1 }}>
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
-          {/* <RootStack.Screen name="MainTabs" component={BottomTabNavigator} /> */}
           {!isAuthenticated ? (
             <>
               <RootStack.Screen name="Welcome" component={WelcomeScreen} />
@@ -98,8 +122,8 @@ export default function AppNavigator({
             </>
           ) : (
             <>
-              <RootStack.Screen name="MainTabs">
-                {(props) => <BottomTabNavigator {...props} setAuthenticated={setAuthenticated} />}
+              <RootStack.Screen name="Main">
+                {(props) => <MainStackScreen {...props} setAuthenticated={setAuthenticated} />}
               </RootStack.Screen>
               <RootStack.Screen
                 name="MusicPlayer"
@@ -109,15 +133,17 @@ export default function AppNavigator({
                   animation: "slide_from_bottom",
                 }}
               />
-              <RootStack.Screen name="AlbumDetail" component={AlbumDetailScreen} />
             </>
           )}
         </RootStack.Navigator>
-        {isAuthenticated ? (
-          <MiniPlayerBar />
-        ) : null}
-
       </View>
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    position: 'relative', 
+  },
+});

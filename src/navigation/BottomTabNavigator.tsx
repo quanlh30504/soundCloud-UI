@@ -111,7 +111,7 @@ export default function BottomTabNavigator({
         }}
       /> */}
       <Tab.Screen
-        name="Library"
+        name="LibraryTab"
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="library-outline" size={size} color={color} />

@@ -18,7 +18,8 @@ const Main = ({ isAuthenticated, setAuthenticated }: { isAuthenticated: boolean 
   
   return (
     <>
-      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      {/* <StatusBar style={theme === 'dark' ? 'light' : 'dark'} /> */}
+      <StatusBar hidden={true} />
       {/* <NavigationContainer>
         <RootNavigator isAuthenticated={isAuthenticated} setAuthenticated={setAuthenticated} />
       </NavigationContainer> */}
