@@ -20,7 +20,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.soundcloud"
+      "package": "com.qmt.soundcloud"
     },
     "web": {
       "favicon": "./assets/favicon.png"

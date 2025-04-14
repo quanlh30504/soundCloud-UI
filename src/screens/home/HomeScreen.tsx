@@ -37,7 +37,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.getProText}>GET PRO</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
-            <Icon name="ios-radio-outline" size={22} color="#ffffff" />
+            <Icon name="radio-outline" size={22} color="#ffffff" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
             <Icon name="time-outline" size={22} color="#ffffff" />
