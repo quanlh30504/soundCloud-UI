@@ -83,7 +83,7 @@ export default function AppNavigator({
             {(props) => <BottomTabNavigator {...props} setAuthenticated={setAuthenticated} />}
           </MainStack.Screen>
           <MainStack.Screen name="AlbumDetail" component={AlbumDetailScreen} />
-          <MainStack.Screen name="SearchResults" component={SearchResultsScreen} /> 
+          {/* <MainStack.Screen name="SearchResults" component={SearchResultsScreen} />  */}
         </MainStack.Navigator>
         
         <MiniPlayerBar />

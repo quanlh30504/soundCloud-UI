@@ -22,6 +22,7 @@ import FollowingScreen from "../screens/library/FollowingScreen";
 import StationsScreen from "../screens/library/StationsScreen";
 import YourUploadsScreen from "../screens/library/YourUploadsScreen";
 import ProfileScreen from "../screens/profile/ProfileScreen";
+import SearchResultsScreen from "../screens/search/SearchResultsScreen";
 
 const Tab = createBottomTabNavigator<RootStackParamList>();
 const LibraryStack = createNativeStackNavigator<RootStackParamList>();
@@ -46,6 +47,16 @@ const LibraryStackScreen = ({
       <LibraryStack.Screen name="YourUploads" component={YourUploadsScreen} />
       <LibraryStack.Screen name="Profile" component={ProfileScreen} />
     </LibraryStack.Navigator>
+  );
+};
+
+const SearchStackScreen = () => {
+  const SearchStack = createNativeStackNavigator<RootStackParamList>();
+  return (
+    <SearchStack.Navigator screenOptions={{ headerShown: false }}>
+      <SearchStack.Screen name="Search" component={SearchScreen} />
+      <SearchStack.Screen name="SearchResults" component={SearchResultsScreen} /> 
+    </SearchStack.Navigator>
   );
 };
 
@@ -92,7 +103,7 @@ export default function BottomTabNavigator({
           ),
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Search"
         component={SearchScreen}
         options={{
@@ -100,16 +111,16 @@ export default function BottomTabNavigator({
             <Ionicons name="search-outline" size={size} color={color} />
           ),
         }}
-      />
-      {/* <Tab.Screen
-        name="Library"
-        component={props => <LibraryStackScreen {...props} setAuthenticated={setAuthenticated} />}
+      /> */}
+      <Tab.Screen
+        name="SearchTab"
+        component={SearchStackScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="library-outline" size={size} color={color} />
+            <Ionicons name="search-outline" size={size} color={color} />
           ),
         }}
-      /> */}
+      />
       <Tab.Screen
         name="LibraryTab"
         options={{

@@ -102,7 +102,7 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
       
       {/* Track Info */}
       <View style={styles.trackInfoContainer}>
-        {trackInfo.artwork && <Image source={trackInfo.artwork} style={styles.thumbnail} />}
+        {trackInfo.artwork && <Image source={{uri: trackInfo.artwork}} style={styles.thumbnail} />}
         <Text style={[styles.trackTitle, { color: themeStyles.text }]}>{trackInfo.title}</Text>
         <Text style={[styles.artistName, { color: themeStyles.secondary }]}>{trackInfo.artist}</Text>
       </View>

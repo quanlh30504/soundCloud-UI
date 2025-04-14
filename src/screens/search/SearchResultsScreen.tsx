@@ -5,8 +5,12 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { searchAll, getTrackInfo } from '../../api/spotifyApi';
+import { searchAll, getTrackInfo } from '../../services/api';
 import trackPlayerService from '../../services/player/TrackPlayerService';
+import {Track} from "react-native-track-player";
+//
+import { convertPathToUrl } from '../../ultis/convertUrl';
+
 
 const TABS = ['All', 'Tracks', 'Albums', 'Playlists'];
 
@@ -32,6 +36,7 @@ const SearchResultsScreen = () => {
     
     try {
       const data = await searchAll(query);
+      console.log('Search results:', data);
       
       setResults({
         tracks: activeTab === 'All' || activeTab === 'Tracks' ? data.tracks || [] : [],
@@ -40,7 +45,6 @@ const SearchResultsScreen = () => {
           ? (data.playlists?.content || data.playlists || []) : []
       });
     } catch (err) {
-      console.error('Search error:', err);
       setError('Failed to search. Please try again.');
       setResults({ tracks: [], albums: [], playlists: [] });
     } finally {
@@ -57,18 +61,41 @@ const SearchResultsScreen = () => {
   }, [query, activeTab]);
   
   const handlePlayTrack = async (track) => {
+    console.log('Playing track:', track);
     try {
       const trackId = track.spotifyId || track.id;
       if (!trackId) return;
       
-      await trackPlayerService.setup();
-      
-      let streamUrl = track.filePath;
-      if (!streamUrl) {
-        const trackInfo = await getTrackInfo(trackId);
-        streamUrl = trackInfo.url || trackInfo.streamUrl;
+      // await trackPlayerService.setup();
+      let trackInfo = await getTrackInfo(trackId);
+      console.log('Track info:', trackInfo);
+      let streamUrl;
+
+      let attempts = 0;
+      const maxAttempts = 5; // 6 seconds / 2 seconds per attempt
+      while (!trackInfo.filePath && attempts < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        trackInfo = await getTrackInfo(trackId);
+        attempts++;
       }
-      
+
+      if (trackInfo.filePath) {
+        streamUrl = trackInfo.filePath;
+      } else {
+        throw new Error('Bài hát chưa được load.');
+      }
+
+      let newTrack: Track = {
+        id: trackId,
+        url: String(convertPathToUrl(streamUrl)),
+        title: trackInfo.name,
+        artist: trackInfo.artists?.join(' & ') || 'Unknown Artist',
+        artwork: track.albumImages[0].url,
+        // duration: trackInfo.durationMs / 1000,
+      }
+
+      console.log('New track:', newTrack);
+      await trackPlayerService.addTracks([newTrack]);
       await trackPlayerService.playTrack(trackId);
     } catch (error) {
       console.error('Error playing track:', error);

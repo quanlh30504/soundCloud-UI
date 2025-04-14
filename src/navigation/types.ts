@@ -1,13 +1,15 @@
 export type RootStackParamList = {
-  Main
-  
   BottomTabs: undefined;
+  LibraryTab: undefined;
+  SearchTab: undefined;
+
   Home: undefined;
   Feed: undefined;
   Search: undefined;
-  LibraryTab: undefined;
   Library: undefined;
   Upgrade: undefined;
+
+  SearchResults: undefined;
   
   Settings: undefined;
   LikedTracks: undefined;

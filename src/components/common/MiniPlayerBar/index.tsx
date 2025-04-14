@@ -108,7 +108,7 @@ const MiniPlayerBar = () => {
         {/* Track info */}
         <View style={styles.trackInfoContainer}>
           {trackInfo.artwork && (
-            <Image source={trackInfo.artwork} style={styles.thumbnail} />
+            <Image source={{uri: trackInfo.artwork}} style={styles.thumbnail} />
           )}
           <View style={styles.textContainer}>
             <Text style={styles.title} numberOfLines={1}>{trackInfo.title}</Text>
@@ -139,7 +139,7 @@ const MiniPlayerBar = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 60, // Position above tab bar
+    bottom: 49, // Position above tab bar
     left: 0,
     right: 0,
     backgroundColor: '#212121',
