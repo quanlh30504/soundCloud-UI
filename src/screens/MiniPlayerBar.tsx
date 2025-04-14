@@ -18,36 +18,53 @@ const MiniPlayerBar = () => {
   const [currentScreen, setCurrentScreen] = useState('');
   const progress = useProgress();
   
-  // Track changes listener
-  useTrackPlayerEvents([Event.PlaybackActiveTrackChanged], async () => {
-    loadTrackInfo();
-  });
-  
-  // Initial setup and periodic check
-  useEffect(() => {
-    const checkStatus = async () => {
+  useTrackPlayerEvents([Event.PlaybackTrackChanged, Event.PlaybackState], async (event) => {
+    if (event.type === Event.PlaybackTrackChanged || event.type === Event.PlaybackState) {
       await loadTrackInfo();
       const playing = await trackPlayerService.isPlaying();
       setIsPlaying(playing);
-      
-      // Get the current route name
-      if (NavigationService.navigationRef.isReady()) {
-        const currentRouteName = NavigationService.navigationRef.getCurrentRoute()?.name;
-        setCurrentScreen(currentRouteName || '');
-      }
+    }
+  });
+  
+  useEffect(() => {
+    const checkStatus = async () => {
+      await loadTrackInfo();
+      checkCurrentScreen();
     };
     
     checkStatus();
-    const interval = setInterval(checkStatus, 1000);
+    
+    const interval = setInterval(() => {
+      checkCurrentScreen();
+    }, 500);
+    
     return () => clearInterval(interval);
   }, []);
   
+  const checkCurrentScreen = () => {
+    if (NavigationService.navigationRef && NavigationService.navigationRef.isReady()) {
+      const currentRouteName = NavigationService.navigationRef.getCurrentRoute()?.name;
+      setCurrentScreen(currentRouteName || '');
+    }
+  };
+  
   const loadTrackInfo = async () => {
-    const info = await trackPlayerService.getCurrentTrackInfo();
-    if (info) {
-      setTrackInfo(info);
-      setVisible(!!info.title);
-    } else {
+    try {
+      const info = await trackPlayerService.getCurrentTrackInfo();
+      
+      // Only show the mini player if we have a valid track with title
+      if (info && info.title) {
+        setTrackInfo(info);
+        setVisible(true);
+        
+        // Also check if it's playing
+        const playing = await trackPlayerService.isPlaying();
+        setIsPlaying(playing);
+      } else {
+        setVisible(false);
+      }
+    } catch (error) {
+      console.error("Error loading track info:", error);
       setVisible(false);
     }
   };
@@ -63,6 +80,10 @@ const MiniPlayerBar = () => {
     await trackPlayerService.skipToNext();
   };
   
+  // Check if we should show the mini player:
+  // 1. Must have a valid track (visible state is true)
+  // 2. Must not be on the full music player screen
+  // 3. Must have at least one track loaded
   if (!visible || currentScreen === 'MusicPlayer') {
     return null;
   }
@@ -71,11 +92,16 @@ const MiniPlayerBar = () => {
     <TouchableOpacity 
       style={styles.container} 
       activeOpacity={0.9}
-      onPress={() => NavigationService.openMusicPlayer()}
+      onPress={() => NavigationService.openMusicPlayer ? 
+        NavigationService.openMusicPlayer() : 
+        NavigationService.navigationRef.navigate('MusicPlayer')}
     >
       {/* Progress bar */}
       <View style={styles.progressContainer}>
-        <View style={[styles.progressBar, { width: `${(progress.position / progress.duration) * 100}%` }]} />
+        <View style={[
+          styles.progressBar, 
+          { width: `${progress.duration > 0 ? (progress.position / progress.duration) * 100 : 0}%` }
+        ]} />
       </View>
       
       <View style={styles.content}>

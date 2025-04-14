@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import TrackPlayer from 'react-native-track-player';
-import { PlaybackService } from './src/services/TrackPlayerService';
 
 const Main = () => {
   const { theme } = useTheme();

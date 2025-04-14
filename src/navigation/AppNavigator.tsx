@@ -10,9 +10,10 @@ import { navigationRef } from "../services/NavigationService";
 import { useTheme } from "../contexts/ThemeContext";
 import { darkTheme, lightTheme } from "../theme/theme";
 import AlbumDetailScreen from "../screens/AlbumDetailScreen";
-// Import the MiniPlayerBar
 import MiniPlayerBar from "../screens/MiniPlayerBar";
+import SearchResultsScreen from '../screens/SearchResultsScreen';
 
+const MainStack = createNativeStackNavigator();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
@@ -25,7 +26,6 @@ export default function AppNavigator() {
       try {
         const isSetup = await trackPlayerService.setup();
         if (isSetup) {
-          await trackPlayerService.addTracks();
           setIsPlayerReady(true);
           console.log("Music player initialized successfully");
         }
@@ -38,41 +38,62 @@ export default function AppNavigator() {
     setupPlayer();
   }, []);
 
+  const MainStackScreen = () => {
+    return (
+      <View style={styles.container}>
+        <MainStack.Navigator 
+          screenOptions={{ 
+            headerShown: false,
+            contentStyle: { flex: 1 }
+          }}
+        >
+          <MainStack.Screen name="BottomTabs" component={BottomTabNavigator} />
+          <MainStack.Screen name="AlbumDetail" component={AlbumDetailScreen} />
+          <MainStack.Screen name="SearchResults" component={SearchResultsScreen} /> 
+        </MainStack.Navigator>
+        
+        <MiniPlayerBar />
+      </View>
+    );
+  };
+
   if (!isPlayerReady) {
-    // You could return a loading component here
     return null;
   }
 
   return (
-    <NavigationContainer ref={navigationRef} theme={{
-      dark: theme === "dark",
-      colors: {
-        primary: themeStyles.colors.primary,
-        background: themeStyles.colors.background,
-        card: themeStyles.colors.card,
-        text: themeStyles.colors.text,
-        border: themeStyles.colors.border,
-        notification: themeStyles.colors.notification,
-      }
-    }}>
-      {/* Wrap with a View to position mini player */}
-      <View style={{ flex: 1 }}>
-        <RootStack.Navigator screenOptions={{ headerShown: false }}>
-          <RootStack.Screen name="MainTabs" component={BottomTabNavigator} />
-          <RootStack.Screen
-            name="MusicPlayer"
-            component={MusicPlayerScreen}
-            options={{
-              presentation: "modal",
-              animation: "slide_from_bottom",
-            }}
-          />
-          <RootStack.Screen name="AlbumDetail" component={AlbumDetailScreen} />
-        </RootStack.Navigator>
-        
-        {/* Add the MiniPlayerBar here */}
-        <MiniPlayerBar />
-      </View>
+    <NavigationContainer 
+      ref={navigationRef}
+      theme={{
+        dark: theme === "dark",
+        colors: {
+          primary: themeStyles.colors.primary,
+          background: themeStyles.colors.background,
+          card: themeStyles.colors.card,
+          text: themeStyles.colors.text,
+          border: themeStyles.colors.border,
+          notification: themeStyles.colors.notification,
+        }
+      }}
+    >
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        <RootStack.Screen name="Main" component={MainStackScreen} />
+                <RootStack.Screen
+          name="MusicPlayer"
+          component={MusicPlayerScreen}
+          options={{
+            presentation: "modal",
+            animation: "slide_from_bottom",
+          }}
+        />
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    position: 'relative', 
+  },
+});
