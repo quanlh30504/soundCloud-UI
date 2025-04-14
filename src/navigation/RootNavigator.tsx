@@ -2,12 +2,14 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import BottomTabNavigator from './BottomTabNavigator';
 import { storageService } from '../services/storage';
 import { auth } from '../config/firebase';
 import { signOut } from 'firebase/auth';
 
 export type RootStackParamList = {
+  Welcome: undefined;
   Login: undefined;
   Register: undefined;
   Main: undefined;
@@ -42,6 +44,7 @@ export function RootNavigator({
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!isAuthenticated ? (
         <>
+          <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="Login">
             {(props) => <LoginScreen {...props} setAuthenticated={setAuthenticated} />}
           </Stack.Screen>

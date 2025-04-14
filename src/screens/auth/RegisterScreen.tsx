@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../../config/firebase';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { Ionicons } from '@expo/vector-icons';
 import { authApi } from '../../services/api';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'> & {
   setAuthenticated: (value: boolean) => void;
@@ -81,59 +82,79 @@ export default function RegisterScreen({ navigation, setAuthenticated }: { navig
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
+      <SafeAreaView style={styles.header}>
+        <View style={styles.backButtonContainer}>
+          <TouchableOpacity 
+            onPress={() => navigation.goBack()} 
+            style={styles.backButton}>
+            <Ionicons name="arrow-back" size={20} color="black" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.imageContainer}>
+          <Image 
+            source={require('../../../assets/images/signup.png')} 
+            style={styles.headerImage} 
+            resizeMode="contain" />
+        </View>
+      </SafeAreaView>
       
-      <TextInput
-        style={styles.input}
-        placeholder="Display Name"
-        value={displayName}
-        onChangeText={setDisplayName}
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      
-      <Button 
-        title={loading ? "Creating Account..." : "Register"} 
-        onPress={handleRegister} 
-        disabled={loading}
-      />
-
-      <View style={styles.divider}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>OR</Text>
-        <View style={styles.dividerLine} />
+      <View style={styles.formContainer}>
+        <View style={styles.form}>
+          <Text style={styles.inputLabel}>Full Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Name"
+            value={displayName}
+            onChangeText={setDisplayName}
+          />
+          
+          <Text style={styles.inputLabel}>Email Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Email"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+          
+          <Text style={styles.inputLabel}>Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          
+          <TouchableOpacity
+            style={styles.signupButton}
+            onPress={handleRegister}
+            disabled={loading}>
+            <Text style={styles.signupButtonText}>
+              {loading ? "Creating Account..." : "Sign Up"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        <Text style={styles.dividerText}>Or</Text>
+        
+        <View style={styles.socialContainer}>
+          <TouchableOpacity 
+            style={styles.googleButton}
+            onPress={handleGoogleSignUp}
+            disabled={loading}>
+            <Ionicons name="logo-google" size={24} color="#DB4437" />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.loginContainer}>
+          <Text style={styles.loginText}>Already have an account?</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.loginLink}> Login</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-
-      <TouchableOpacity
-        style={styles.googleButton}
-        onPress={handleGoogleSignUp}
-        disabled={loading}
-      >
-        <Ionicons name="logo-google" size={20} color="#DB4437" />
-        <Text style={styles.googleButtonText}>Sign up with Google</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity 
-        style={styles.loginLink} 
-        onPress={() => navigation.navigate('Login')}
-      >
-        <Text style={styles.loginText}>Already have an account? Login</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -141,68 +162,98 @@ export default function RegisterScreen({ navigation, setAuthenticated }: { navig
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#000000', // Pure black background
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: "center",
-    color: '#333',
+  header: {
+    flex: 0.2,
+  },
+  backButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: 16,
+    backgroundColor: '#333333',
+    borderRadius: 4,
+  },
+  imageContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  headerImage: {
+    width: 325,
+    height: 110,
+  },
+  formContainer: {
+    flex: 0.8,
+    backgroundColor: '#111111',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingHorizontal: 32,
+    paddingTop: 32,
+  },
+  form: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    color: '#999999',
+    marginLeft: 16,
+    marginBottom: 4,
   },
   input: {
-    height: 50,
-    backgroundColor: '#f5f5f5',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    marginBottom: 15,
-    paddingHorizontal: 15,
+    padding: 16,
+    backgroundColor: '#222222',
+    color: 'white',
+    borderRadius: 4,
+    marginBottom: 12,
     fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#333333',
   },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
+  signupButton: {
+    backgroundColor: '#FF5500',
+    padding: 12,
+    borderRadius: 4,
+    marginTop: 16,
+    marginBottom: 16,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#ddd',
+  signupButtonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: 'white',
   },
   dividerText: {
-    marginHorizontal: 10,
-    color: '#666',
+    fontSize: 16,
+    color: '#999999',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    paddingVertical: 20,
+  },
+  socialContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 24,
   },
   googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+    padding: 8,
+    backgroundColor: '#222222',
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
+    borderColor: '#333333',
   },
-  googleButtonText: {
-    marginLeft: 10,
-    color: '#333',
-    fontSize: 16,
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 28,
+  },
+  loginText: {
+    color: '#999999',
     fontWeight: '500',
   },
   loginLink: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: "#007AFF",
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  loginText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF5500',
   },
 });
