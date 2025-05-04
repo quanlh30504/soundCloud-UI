@@ -20,10 +20,10 @@ export default function HomeScreen({ navigation }) {
   const handleTrackPress = async (trackId: string) => {
     await trackPlayerService.setup();
     await trackPlayerService.playTrack(trackId);
-    navigation.navigate("MusicPlayer");
+    // navigation.navigate("MusicPlayer");
       // Example from HomeScreen
-      // const album = albums.find((album) => album.id === "album1");
-      // navigation.navigate("AlbumDetail", { album })
+      const album = albums.find((album) => album.id === "album1");
+      navigation.navigate("AlbumDetail", { album })
   };
 
   return (

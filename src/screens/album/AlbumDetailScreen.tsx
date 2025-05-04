@@ -1,17 +1,11 @@
-import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  FlatList,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {View,Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../contexts/ThemeContext';
 import TrackPlayer, { Track } from 'react-native-track-player';
+import DraggableFlatList, {RenderItemParams, ScaleDecorator} from 'react-native-draggable-flatlist';
+import  {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 interface Album {
   id: string;
@@ -33,40 +27,41 @@ interface AlbumDetailScreenProps {
 export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScreenProps) {
   const album: Album = route.params.album;
   const { theme } = useTheme();
+  const [orderedTracks, setOrderedTracks] = useState<Track[]>([]);
 
   const backgroundColor = '#121212';
   const textColor = '#ffffff';
   const secondaryTextColor = '#a0a0a0';
 
-  // Setup TrackPlayer queue with album tracks on mount
   useEffect(() => {
+
+    setOrderedTracks([...album.tracks]);
+
     const setupQueue = async () => {
       try {
-        await TrackPlayer.reset(); // Clear existing queue
-        await TrackPlayer.add(album.tracks); // Add album tracks
+        await TrackPlayer.reset();
+        await TrackPlayer.add(album.tracks);
         console.log('Album tracks added to queue');
       } catch (error) {
-        console.error('Error setting up album queue:', error);
+        console.error('Error album queue:', error);
       }
     };
     setupQueue();
   }, [album]);
 
-  // Handler to play the album from the first track
   const handlePlayAlbum = async () => {
     try {
-      await TrackPlayer.skip(0); // Skip to the first track
+      await TrackPlayer.skip(0);
       await TrackPlayer.play();
-      navigation.navigate('MusicPlayer'); // Navigate to player screen
+      navigation.navigate('MusicPlayer'); 
     } catch (error) {
       console.error('Error playing album:', error);
     }
   };
 
-  // Handler to play a specific track
   const handleTrackPress = async (index: number) => {
     try {
-      await TrackPlayer.skip(index); // Skip to the selected track
+      await TrackPlayer.skip(index);
       await TrackPlayer.play();
       navigation.navigate('MusicPlayer');
     } catch (error) {
@@ -74,63 +69,91 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
     }
   };
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
-      
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
-          <Icon name="chevron-down" size={28} color="#ffffff" />
-        </TouchableOpacity>
-      </View>
-      <ScrollView>
-        <Image source={album.coverArt} style={styles.coverArt} />
+  const handleDragEnd = async ({ data} : {data: Track[]}) => {
+    setOrderedTracks(data);
+    try {
+      await TrackPlayer.reset();
+      await TrackPlayer.add(data);
+      console.log('Reordered tracks added to queue');
+    } catch (error) {
+      console.error('Error reordering tracks:', error);
+    }
+  }
 
-        <View style={styles.infoContainer}>
-          <Text style={[styles.title, { color: textColor }]}>{album.title}</Text>
-          <Text style={[styles.artist, { color: secondaryTextColor }]}>
-            {album.artist}
-          </Text>
-        </View>
-
-        <View style={styles.controls}>
-          <TouchableOpacity style={styles.playButton} onPress={handlePlayAlbum}>
-            <Icon name="play" size={24} color="#ffffff" />
-            <Text style={styles.playButtonText}>Play</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.shuffleButton}>
-            <Icon name="shuffle" size={24} color="#ffffff" />
-            <Text style={styles.shuffleButtonText}>Shuffle</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Track List */}
-        <FlatList
-          data={album.tracks}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <TouchableOpacity
-              style={styles.trackItem}
-              onPress={() => handleTrackPress(index)}
-            >
-              <View style={styles.trackInfo}>
-                <Image source={album.coverArt} style={styles.trackImage} />
-                <Text style={[styles.trackNumber, { color: secondaryTextColor }]}>
-                  {index + 1}
+  const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Track>) => {
+    const trackIndex = getIndex(); 
+    return (
+      <ScaleDecorator>
+        <TouchableOpacity
+          style={[
+            styles.trackItem,
+            {backgroundColor: isActive ? '#333' : backgroundColor}
+          ]}
+          onLongPress={drag}
+          onPress={() => handleTrackPress(trackIndex)}
+          delayLongPress={100}
+          disabled={isActive}
+          >
+            <View style={styles.trackInfo}>
+              <Image source={album.coverArt} style={styles.trackImage} />
+              <Text style={[styles.trackNumber, { color: secondaryTextColor }]}>
+                {trackIndex + 1}
+              </Text>
+              <View style={styles.trackDetails}>
+                <Text style={[styles.trackTitle, { color: textColor }]}>
+                  {item.title}
                 </Text>
-                <View style={styles.trackDetails}>
-                  <Text style={[styles.trackTitle, { color: textColor }]}>
-                    {item.title}
-                  </Text>
-                  <Text style={[styles.trackArtist, { color: secondaryTextColor }]}>
-                    {item.artist}
-                  </Text>
-                </View>
+                <Text style={[styles.trackArtist, { color: secondaryTextColor }]}>
+                  {item.artist}
+                </Text>
               </View>
+              <View style={styles.dragHandle}>
+                <Icon name="reorder-three-outline" size={24} color="#ffffff" />
+              </View>
+            </View>
+        </TouchableOpacity>
+      </ScaleDecorator>
+    )
+  }
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={[styles.container, { backgroundColor }]}>
+        
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
+            <Icon name="chevron-down" size={28} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
+
+          <Image source={album.coverArt} style={styles.coverArt} />
+
+          <View style={styles.infoContainer}>
+            <Text style={[styles.title, { color: textColor }]}>{album.title}</Text>
+            <Text style={[styles.artist, { color: secondaryTextColor }]}>
+              {album.artist}
+            </Text>
+          </View>
+
+          <View style={styles.controls}>
+            <TouchableOpacity style={styles.playButton} onPress={handlePlayAlbum}>
+              <Icon name="play" size={24} color="#ffffff" />
+              <Text style={styles.playButtonText}>Play</Text>
             </TouchableOpacity>
-          )}
-        />
-      </ScrollView>
-    </SafeAreaView>
+            <TouchableOpacity style={styles.shuffleButton}>
+              <Icon name="shuffle" size={24} color="#ffffff" />
+              <Text style={styles.shuffleButtonText}>Shuffle</Text>
+            </TouchableOpacity>
+          </View>
+
+          <DraggableFlatList 
+            data={orderedTracks} 
+            onDragEnd={handleDragEnd} 
+            style={{ flex:1}} 
+            keyExtractor={(item) => item.id} renderItem={renderItem} 
+             />
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
@@ -163,15 +186,15 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   infoContainer: {
-    padding: 20, // Increased padding for breathing room
+    padding: 20, 
   },
   title: {
-    fontSize: 28, // Larger for emphasis
+    fontSize: 28, 
     fontWeight: 'bold',
   },
   artist: {
-    fontSize: 20, // Slightly larger
-    marginTop: 8, // More spacing
+    fontSize: 20, 
+    marginTop: 8, 
   },
   controls: {
     flexDirection: 'row',
@@ -181,10 +204,10 @@ const styles = StyleSheet.create({
   playButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1DB954', // Green color for "Play" (e.g., Spotify-inspired)
+    backgroundColor: '#1DB954',
     padding: 12,
     marginRight: 20,
-    borderRadius: 25, // Rounded corners
+    borderRadius: 25, 
   },
   playButtonText: {
     color: '#ffffff',
@@ -194,9 +217,9 @@ const styles = StyleSheet.create({
   shuffleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#333', // Kept original color
+    backgroundColor: '#333', 
     padding: 12,
-    borderRadius: 25, // Rounded corners
+    borderRadius: 25,
   },
   shuffleButtonText: {
     color: '#ffffff',
@@ -206,7 +229,7 @@ const styles = StyleSheet.create({
   trackItem: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#222', // Slightly lighter separator
+    borderBottomColor: '#222',
   },
   trackInfo: {
     flexDirection: 'row',
@@ -214,10 +237,11 @@ const styles = StyleSheet.create({
   },
   trackNumber: {
     fontSize: 16,
-    width: 30, // Fixed width for alignment
+    width: 30,
   },
   trackDetails: {
     marginLeft: 10,
+    flex: 1,
   },
   trackTitle: {
     fontSize: 16,
@@ -226,4 +250,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
+  dragHandle: {
+    padding: 10,
+  }
 });
