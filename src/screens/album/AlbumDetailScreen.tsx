@@ -27,16 +27,15 @@ interface AlbumDetailScreenProps {
 export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScreenProps) {
   const album: Album = route.params.album;
   const { theme } = useTheme();
-  const [orderedTracks, setOrderedTracks] = useState<Track[]>([]);
+  const [orderedTracks, setOrderedTracks] = useState<Track[]>(album.tracks);
 
   const backgroundColor = '#121212';
   const textColor = '#ffffff';
   const secondaryTextColor = '#a0a0a0';
 
   useEffect(() => {
-
-    setOrderedTracks([...album.tracks]);
-
+    
+    // setOrderedTracks([...album.tracks]);
     const setupQueue = async () => {
       try {
         await TrackPlayer.reset();
@@ -47,7 +46,7 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
       }
     };
     setupQueue();
-  }, [album]);
+  }, []);
 
   const handlePlayAlbum = async () => {
     try {
@@ -78,6 +77,26 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
     } catch (error) {
       console.error('Error reordering tracks:', error);
     }
+  }
+
+  const handleShuffle = () => {
+    const shuffled = [...orderedTracks];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    setOrderedTracks(shuffled);
+    const updateQueue = async () => {
+      try {
+        await TrackPlayer.reset();
+        await TrackPlayer.add(shuffled);
+        console.log('Shuffled tracks added');
+      } catch (error) {
+        console.error('Error shuffling tracks', error);
+      }
+    };
+    updateQueue();
   }
 
   const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Track>) => {
@@ -140,7 +159,7 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
               <Icon name="play" size={24} color="#ffffff" />
               <Text style={styles.playButtonText}>Play</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.shuffleButton}>
+            <TouchableOpacity style={styles.shuffleButton} onPress={handleShuffle}>
               <Icon name="shuffle" size={24} color="#ffffff" />
               <Text style={styles.shuffleButtonText}>Shuffle</Text>
             </TouchableOpacity>
@@ -150,7 +169,8 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
             data={orderedTracks} 
             onDragEnd={handleDragEnd} 
             style={{ flex:1}} 
-            keyExtractor={(item) => item.id} renderItem={renderItem} 
+            keyExtractor={(item) => item.id} 
+            renderItem={renderItem} 
              />
       </SafeAreaView>
     </GestureHandlerRootView>
