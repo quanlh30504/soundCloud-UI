@@ -6,6 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import TrackPlayer, { Track } from 'react-native-track-player';
 import DraggableFlatList, {RenderItemParams, ScaleDecorator} from 'react-native-draggable-flatlist';
 import  {GestureHandlerRootView} from 'react-native-gesture-handler';
+import { getAlbumInfo } from '../../services/api';
 
 interface Album {
   id: string;
@@ -25,28 +26,53 @@ interface AlbumDetailScreenProps {
 }
 
 export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScreenProps) {
-  const album: Album = route.params.album;
+  const { albumId } = route.params;
+  const [ album, setAlbum] = useState(null);
+
+  // const album: Album = route.params.album;
   const { theme } = useTheme();
-  const [orderedTracks, setOrderedTracks] = useState<Track[]>(album.tracks);
+  const [orderedTracks, setOrderedTracks] = useState([]);
 
   const backgroundColor = '#121212';
   const textColor = '#ffffff';
+  const [isLoading, setIsLoading] = useState(true);
   const secondaryTextColor = '#a0a0a0';
 
   useEffect(() => {
-    
-    // setOrderedTracks([...album.tracks]);
-    const setupQueue = async () => {
+    const fetchAlbumDetails = async () => {
       try {
-        await TrackPlayer.reset();
-        await TrackPlayer.add(album.tracks);
-        console.log('Album tracks added to queue');
+        setIsLoading(true);
+        const albumData = await getAlbumInfo(albumId);
+        console.log("Album data received:", albumData);
+        const mappedTracks = albumData.tracks.map(track => ({
+          ...track,
+          id: track.spotifyId,
+        }));
+
+        setAlbum(albumData);
+        setOrderedTracks(mappedTracks);
+        setIsLoading(false);
+
+        if (albumData.tracks && albumData.tracks.length > 0) {
+          await TrackPlayer.reset();
+          await TrackPlayer.add(albumData.tracks);
+          console.log('Album tracks added to queue');
+        }
       } catch (error) {
-        console.error('Error album queue:', error);
+        console.error('Error fetching album details:', error);
       }
     };
-    setupQueue();
-  }, []);
+
+    fetchAlbumDetails();
+  }, [albumId]);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: '#121212', justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: '#ffffff' }}>Loading...</Text>
+      </View>
+    )
+  }
 
   const handlePlayAlbum = async () => {
     try {
@@ -114,16 +140,16 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
           disabled={isActive}
           >
             <View style={styles.trackInfo}>
-              <Image source={album.coverArt} style={styles.trackImage} />
+              <Image source={album.images[0].url} style={styles.trackImage} />
               <Text style={[styles.trackNumber, { color: secondaryTextColor }]}>
                 {trackIndex + 1}
               </Text>
               <View style={styles.trackDetails}>
                 <Text style={[styles.trackTitle, { color: textColor }]}>
-                  {item.title}
+                  {item.name}
                 </Text>
                 <Text style={[styles.trackArtist, { color: secondaryTextColor }]}>
-                  {item.artist}
+                  {item.artists.join(', ')}
                 </Text>
               </View>
               <View style={styles.dragHandle}>
@@ -145,10 +171,10 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
           </TouchableOpacity>
         </View>
 
-          <Image source={album.coverArt} style={styles.coverArt} />
+          <Image source={album.images[0].url} style={styles.coverArt} />
 
           <View style={styles.infoContainer}>
-            <Text style={[styles.title, { color: textColor }]}>{album.title}</Text>
+            <Text style={[styles.title, { color: textColor }]}>{album.name}</Text>
             <Text style={[styles.artist, { color: secondaryTextColor }]}>
               {album.artist}
             </Text>

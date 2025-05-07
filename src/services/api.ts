@@ -138,20 +138,20 @@ export const searchPlaylists = async (
 };
 
 export const searchAll = async (query: string) => {
-  const [tracksResponse,
-    //  albumsResponse,
-    //   playlistsResponse
-    ] = await Promise.all([
-    searchTracks(query).catch(() => []),
-    // searchAlbums(query).catch(() => []),
-    // searchPlaylists(query).catch(() => ({ content: [] }))
-  ]);
-  
-  return {
-    tracks: tracksResponse,
-    // albums: albumsResponse,
-    // playlists: playlistsResponse
+  try {
+    const tracks = await searchTracks(query);
+    const albums = await searchAlbums(query);
+    const playlists = await searchPlaylists(query);
+
+    return {
+      tracks,
+      albums,
+      playlists
     };
+  } catch (error) {
+    console.error('Error searching all:', error);
+    return { tracks: [], albums: [], playlists: [] };
+  }
 };
 
 export const getTrackInfo = async (trackId: string) => {

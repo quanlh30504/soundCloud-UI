@@ -23,14 +23,15 @@ const SearchResultsScreen = () => {
   const [results, setResults] = useState({ tracks: [], albums: [], playlists: [] });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  
-  // Search function
+  const [cachedResults, setCachedResults] = useState(null);
+
   const performSearch = async () => {
     if (!query.trim()) {
       setResults({ tracks: [], albums: [], playlists: [] });
+      setCachedResults(null);
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
     
@@ -38,15 +39,24 @@ const SearchResultsScreen = () => {
       const data = await searchAll(query);
       console.log('Search results:', data);
       
+      const standardizedData = {
+        tracks: data.tracks || [],
+        albums: data.albums || [],
+        playlists: data.playlists?.content || []
+      };
+
+      setCachedResults(standardizedData);
+
       setResults({
-        tracks: activeTab === 'All' || activeTab === 'Tracks' ? data.tracks || [] : [],
-        albums: activeTab === 'All' || activeTab === 'Albums' ? data.albums || [] : [],
-        playlists: activeTab === 'All' || activeTab === 'Playlists' 
-          ? (data.playlists?.content || data.playlists || []) : []
+        tracks: activeTab === 'All' || activeTab === 'Tracks' ? standardizedData.tracks : [],
+        albums: activeTab === 'All' || activeTab === 'Albums' ? standardizedData.albums : [],
+        playlists: activeTab === 'All' || activeTab === 'Playlists' ? standardizedData.playlists : []
       });
+      
     } catch (err) {
-      setError('Failed to search. Please try again.');
+      console.error('Failed to search. Please try again.');
       setResults({ tracks: [], albums: [], playlists: [] });
+      setCachedResults(null);
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +68,7 @@ const SearchResultsScreen = () => {
     }, 500);
     
     return () => clearTimeout(timer);
-  }, [query, activeTab]);
+  }, [query]);
   
   const handlePlayTrack = async (track) => {
     console.log('Playing track:', track);
@@ -72,7 +82,7 @@ const SearchResultsScreen = () => {
       let streamUrl;
 
       let attempts = 0;
-      const maxAttempts = 5; // 6 seconds / 2 seconds per attempt
+      const maxAttempts = 5; 
       while (!trackInfo.filePath && attempts < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
         trackInfo = await getTrackInfo(trackId);
@@ -176,6 +186,17 @@ const SearchResultsScreen = () => {
       </View>
     </TouchableOpacity>
   );
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (cachedResults) {
+      setResults({
+        tracks: tab === 'All' || tab === 'Tracks' ? cachedResults.tracks : [],
+        albums: tab === 'All' || tab === 'Albums' ? cachedResults.albums : [],
+        playlists: tab === 'All' || tab === 'Playlists' ? cachedResults.playlists : []
+      });
+    }
+  }
   
   const renderContent = () => {
     if (isLoading && !results.tracks.length && !results.albums.length && !results.playlists.length) {
@@ -229,12 +250,16 @@ const SearchResultsScreen = () => {
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Tracks</Text>
                 {activeTab === 'All' && results.tracks.length > 3 && (
-                  <TouchableOpacity onPress={() => setActiveTab('Tracks')}>
+                  <TouchableOpacity onPress={() => handleTabChange('Tracks')}>
                     <Text style={styles.seeAllText}>See all</Text>
                   </TouchableOpacity>
                 )}
               </View>
-              {(activeTab === 'All' ? results.tracks.slice(0, 3) : results.tracks).map(renderTrackItem)}
+              {(activeTab === 'All' ? results.tracks.slice(0, 3) : results.tracks).map(track => (
+                <React.Fragment key={track.id || track.spotifyId}>
+                  {renderTrackItem(track)}
+                </React.Fragment>
+              ))}
             </View>
           )}
           
@@ -244,7 +269,7 @@ const SearchResultsScreen = () => {
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Albums</Text>
                 {activeTab === 'All' && results.albums.length > 3 && (
-                  <TouchableOpacity onPress={() => setActiveTab('Albums')}>
+                  <TouchableOpacity onPress={() => handleTabChange('Albums')}>
                     <Text style={styles.seeAllText}>See all</Text>
                   </TouchableOpacity>
                 )}
@@ -265,12 +290,16 @@ const SearchResultsScreen = () => {
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Playlists</Text>
                 {activeTab === 'All' && results.playlists.length > 3 && (
-                  <TouchableOpacity onPress={() => setActiveTab('Playlists')}>
+                  <TouchableOpacity onPress={() => handleTabChange('Playlists')}>
                     <Text style={styles.seeAllText}>See all</Text>
                   </TouchableOpacity>
                 )}
               </View>
-              {(activeTab === 'All' ? results.playlists.slice(0, 3) : results.playlists).map(renderPlaylistItem)}
+              {(activeTab === 'All' ? results.playlists.slice(0, 3) : results.playlists).map((playlist) => (
+                <View key={playlist.id}>
+                {renderPlaylistItem(playlist)}
+                </View>
+              ))}
             </View>
           )}
           
@@ -316,7 +345,7 @@ const SearchResultsScreen = () => {
           <TouchableOpacity
             key={tab}
             style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}
-            onPress={() => setActiveTab(tab)}
+            onPress={() => handleTabChange(tab)}
           >
             <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
               {tab}
