@@ -18,6 +18,7 @@ import SearchResultsScreen from '../screens/search/SearchResultsScreen';
 import { storageService } from '../services/storage';
 import { auth } from '../config/firebase';
 import { signOut } from 'firebase/auth';
+import PlaylistDetailScreen from "../screens/playlist/PlayListScreen";
 
 const MainStack = createNativeStackNavigator();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -83,6 +84,7 @@ export default function AppNavigator({
             {(props) => <BottomTabNavigator {...props} setAuthenticated={setAuthenticated} />}
           </MainStack.Screen>
           <MainStack.Screen name="AlbumDetail" component={AlbumDetailScreen} />
+          <MainStack.Screen name="Playlist" component={PlaylistDetailScreen} />
           {/* <MainStack.Screen name="SearchResults" component={SearchResultsScreen} />  */}
         </MainStack.Navigator>
         

@@ -18,8 +18,8 @@ const MiniPlayerBar = () => {
   const [currentScreen, setCurrentScreen] = useState('');
   const progress = useProgress();
   
-  useTrackPlayerEvents([Event.PlaybackTrackChanged, Event.PlaybackState], async (event) => {
-    if (event.type === Event.PlaybackTrackChanged || event.type === Event.PlaybackState) {
+  useTrackPlayerEvents([Event.PlaybackActiveTrackChanged, Event.PlaybackState], async (event) => {
+    if (event.type === Event.PlaybackActiveTrackChanged || event.type === Event.PlaybackState) {
       await loadTrackInfo();
       const playing = await trackPlayerService.isPlaying();
       setIsPlaying(playing);
@@ -52,12 +52,10 @@ const MiniPlayerBar = () => {
     try {
       const info = await trackPlayerService.getCurrentTrackInfo();
       
-      // Only show the mini player if we have a valid track with title
       if (info && info.title) {
         setTrackInfo(info);
         setVisible(true);
         
-        // Also check if it's playing
         const playing = await trackPlayerService.isPlaying();
         setIsPlaying(playing);
       } else {
@@ -80,10 +78,6 @@ const MiniPlayerBar = () => {
     await trackPlayerService.skipToNext();
   };
   
-  // Check if we should show the mini player:
-  // 1. Must have a valid track (visible state is true)
-  // 2. Must not be on the full music player screen
-  // 3. Must have at least one track loaded
   if (!visible || currentScreen === 'MusicPlayer') {
     return null;
   }
@@ -139,7 +133,7 @@ const MiniPlayerBar = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 49, // Position above tab bar
+    bottom: 49, 
     left: 0,
     right: 0,
     backgroundColor: '#212121',

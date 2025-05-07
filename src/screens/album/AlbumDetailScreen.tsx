@@ -6,7 +6,9 @@ import { useTheme } from '../../contexts/ThemeContext';
 import TrackPlayer, { Track } from 'react-native-track-player';
 import DraggableFlatList, {RenderItemParams, ScaleDecorator} from 'react-native-draggable-flatlist';
 import  {GestureHandlerRootView} from 'react-native-gesture-handler';
-import { getAlbumInfo } from '../../services/api';
+import { getAlbumInfo, getTrackInfo } from '../../services/api';
+import { loadAndPlayTrack, playFirstTrack } from '../../services/player/trackPlayerHelper';
+import { load } from 'react-native-track-player/lib/src/trackPlayer';
 
 interface Album {
   id: string;
@@ -28,6 +30,7 @@ interface AlbumDetailScreenProps {
 export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScreenProps) {
   const { albumId } = route.params;
   const [ album, setAlbum] = useState(null);
+  const [loadingTrackId, setLoadingTrackId] = useState(null);
 
   // const album: Album = route.params.album;
   const { theme } = useTheme();
@@ -53,11 +56,13 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
         setOrderedTracks(mappedTracks);
         setIsLoading(false);
 
-        if (albumData.tracks && albumData.tracks.length > 0) {
-          await TrackPlayer.reset();
-          await TrackPlayer.add(albumData.tracks);
-          console.log('Album tracks added to queue');
-        }
+
+        console.log('Album tracks:', mappedTracks);
+        // if (albumData.tracks && albumData.tracks.length > 0) {
+        //   await TrackPlayer.reset();
+        //   await TrackPlayer.add(albumData.tracks);
+        //   console.log('Album tracks added to queue');
+        // }
       } catch (error) {
         console.error('Error fetching album details:', error);
       }
@@ -75,23 +80,11 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
   }
 
   const handlePlayAlbum = async () => {
-    try {
-      await TrackPlayer.skip(0);
-      await TrackPlayer.play();
-      navigation.navigate('MusicPlayer'); 
-    } catch (error) {
-      console.error('Error playing album:', error);
-    }
+    await playFirstTrack(orderedTracks, setLoadingTrackId, navigation);
   };
-
-  const handleTrackPress = async (index: number) => {
-    try {
-      await TrackPlayer.skip(index);
-      await TrackPlayer.play();
-      navigation.navigate('MusicPlayer');
-    } catch (error) {
-      console.error('Error playing track:', error);
-    }
+  
+  const handleTrackPress = async (track, index) => {
+    await loadAndPlayTrack(track, setLoadingTrackId, navigation);
   };
 
   const handleDragEnd = async ({ data} : {data: Track[]}) => {
@@ -135,7 +128,7 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
             {backgroundColor: isActive ? '#333' : backgroundColor}
           ]}
           onLongPress={drag}
-          onPress={() => handleTrackPress(trackIndex)}
+          onPress={() => handleTrackPress(item, trackIndex)}
           delayLongPress={100}
           disabled={isActive}
           >

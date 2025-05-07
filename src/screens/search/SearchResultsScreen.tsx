@@ -8,8 +8,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { searchAll, getTrackInfo } from '../../services/api';
 import trackPlayerService from '../../services/player/TrackPlayerService';
 import {Track} from "react-native-track-player";
-//
 import { convertPathToUrl } from '../../ultis/convertUrl';
+import { loadAndPlayTrack } from '../../services/player/trackPlayerHelper';
 
 
 const TABS = ['All', 'Tracks', 'Albums', 'Playlists'];
@@ -24,6 +24,7 @@ const SearchResultsScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cachedResults, setCachedResults] = useState(null);
+  const [loadingTrackId, setLoadingTrackId] = useState(null);
 
   const performSearch = async () => {
     if (!query.trim()) {
@@ -70,46 +71,49 @@ const SearchResultsScreen = () => {
     return () => clearTimeout(timer);
   }, [query]);
   
-  const handlePlayTrack = async (track) => {
-    console.log('Playing track:', track);
-    try {
-      const trackId = track.spotifyId || track.id;
-      if (!trackId) return;
+  // const handlePlayTrack = async (track) => {
+  //   console.log('Playing track:', track);
+  //   try {
+  //     const trackId = track.spotifyId || track.id;
+  //     if (!trackId) return;
       
-      // await trackPlayerService.setup();
-      let trackInfo = await getTrackInfo(trackId);
-      console.log('Track info:', trackInfo);
-      let streamUrl;
+  //     // await trackPlayerService.setup();
+  //     let trackInfo = await getTrackInfo(trackId);
+  //     console.log('Track info:', trackInfo);
+  //     let streamUrl;
 
-      let attempts = 0;
-      const maxAttempts = 5; 
-      while (!trackInfo.filePath && attempts < maxAttempts) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        trackInfo = await getTrackInfo(trackId);
-        attempts++;
-      }
+  //     let attempts = 0;
+  //     const maxAttempts = 5; 
+  //     while (!trackInfo.filePath && attempts < maxAttempts) {
+  //       await new Promise((resolve) => setTimeout(resolve, 2000));
+  //       trackInfo = await getTrackInfo(trackId);
+  //       attempts++;
+  //     }
 
-      if (trackInfo.filePath) {
-        streamUrl = trackInfo.filePath;
-      } else {
-        throw new Error('Bài hát chưa được load.');
-      }
+  //     if (trackInfo.filePath) {
+  //       streamUrl = trackInfo.filePath;
+  //     } else {
+  //       throw new Error('Bài hát chưa được load.');
+  //     }
 
-      let newTrack: Track = {
-        id: trackId,
-        url: String(convertPathToUrl(streamUrl)),
-        title: trackInfo.name,
-        artist: trackInfo.artists?.join(' & ') || 'Unknown Artist',
-        artwork: track.albumImages[0].url,
-        // duration: trackInfo.durationMs / 1000,
-      }
+  //     let newTrack: Track = {
+  //       id: trackId,
+  //       url: String(convertPathToUrl(streamUrl)),
+  //       title: trackInfo.name,
+  //       artist: trackInfo.artists?.join(' & ') || 'Unknown Artist',
+  //       artwork: track.albumImages[0].url,
+  //       // duration: trackInfo.durationMs / 1000,
+  //     }
 
-      console.log('New track:', newTrack);
-      await trackPlayerService.addTracks([newTrack]);
-      await trackPlayerService.playTrack(trackId);
-    } catch (error) {
-      console.error('Error playing track:', error);
-    }
+  //     console.log('New track:', newTrack);
+  //     await trackPlayerService.addTracks([newTrack]);
+  //     await trackPlayerService.playTrack(trackId);
+  //   } catch (error) {
+  //     console.error('Error playing track:', error);
+  //   }
+  // };
+  const handlePlayTrack = async (track) => {
+    await loadAndPlayTrack(track, setLoadingTrackId, navigation);
   };
   
   const formatDuration = (ms) => {
@@ -167,7 +171,7 @@ const SearchResultsScreen = () => {
   const renderPlaylistItem = (item) => (
     <TouchableOpacity 
       style={styles.playlistItem}
-      onPress={() => navigation.navigate('PlaylistDetail', { playlistId: item.id })}
+      onPress={() => navigation.navigate('Playlist', { playlistId: item.id })}
       key={item.id}
     >
       {item.images?.[0]?.url ? (
