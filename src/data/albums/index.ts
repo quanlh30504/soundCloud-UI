@@ -3,14 +3,14 @@ export const albums = [
       id: "album1",
       title: "Greatest Hits",
       artist: "Artist Name",
-      coverArt: require("../../../assets/avicii.jpg"),
+      coverArt: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
       tracks: [
         {
           id: "track1",
           url: require("../../../assets/music/BauTroiMoi.mp3"),
           title: "Bau Troi Moi",
           artist: "Artist Name",
-          artwork: require("../../../assets/avicii.jpg"),
+          artwork: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
           duration: 230,
         },
         {
@@ -18,7 +18,7 @@ export const albums = [
           url: require("../../../assets/music/ThatTinh.mp3"),
           title: "That Tinh",
           artist: "Artist Name",
-          artwork: require("../../../assets/avicii.jpg"),
+          artwork: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
           duration: 230,
         },
         {
@@ -26,7 +26,7 @@ export const albums = [
           url: require("../../../assets/music/BauTroiMoi.mp3"),
           title: "Bau Troi Moi",
           artist: "Artist Name",
-          artwork: require("../../../assets/avicii.jpg"),
+          artwork: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
           duration: 230,
         },
         {
@@ -34,7 +34,7 @@ export const albums = [
           url: require("../../../assets/music/ThatTinh.mp3"),
           title: "Yeu bao lau",
           artist: "Artist Name",
-          artwork: require("../../../assets/avicii.jpg"),
+          artwork: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
           duration: 230,
         },
         {
@@ -42,7 +42,7 @@ export const albums = [
           url: require("../../../assets/music/ThatTinh.mp3"),
           title: "Yeu bao lau thi cuoi",
           artist: "Artist 5",
-          artwork: require("../../../assets/avicii.jpg"),
+          artwork: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
           duration: 230,
         },
       ],

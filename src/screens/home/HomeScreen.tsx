@@ -9,7 +9,7 @@ import { recommendedTracks, buzzingCategories } from "../../data/mockData";
 import { albums } from "../../data/albums";
 
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation }: any) {
   const { theme } = useTheme();
   const themeStyles = darkTheme;
 
@@ -65,7 +65,7 @@ export default function HomeScreen({ navigation }) {
                 style={styles.trackItem}
                 onPress={() => handleTrackPress(track.id)}
               >
-                <Image source={track.coverArt} style={styles.trackCover} />
+                <Image source={{uri: track.coverArt}} style={styles.trackCover} />
                 <View style={styles.trackInfo}>
                   <Text style={styles.trackTitle} numberOfLines={1}>
                     {track.title}
@@ -96,7 +96,7 @@ export default function HomeScreen({ navigation }) {
                   { backgroundColor: category.color },
                 ]}
               >
-                <Image source={category.coverArt} style={styles.buzzingCover} />
+                <Image source={{uri: category.coverArt}} style={styles.buzzingCover} />
                 <View style={styles.buzzingOverlay}>
                   <Text style={styles.buzzingBadge}>BUZZING</Text>
                   <Text style={styles.buzzingGenre}>{category.genre}</Text>

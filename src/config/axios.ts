@@ -1,6 +1,7 @@
 import axios from "axios";
 import { auth } from "./firebase";
 import { storageService } from "../services/storage";
+import { initFakeAuth } from "../../App";
 
 
 const axiosInstance = axios.create({
@@ -25,6 +26,15 @@ axiosInstance.interceptors.request.use(
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+
+      // Thêm Firebase UID vào header
+      const userData = await storageService.getUserData();
+
+      if (userData && userData.firebaseUid) {
+        config.headers['X-Firebase-Uid'] = userData.firebaseUid;
+      } else {
+        console.error("Firebase UID not found in user data");
       }
 
       return config;

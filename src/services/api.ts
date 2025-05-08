@@ -1,5 +1,6 @@
 import axiosInstance from '../config/axios';
 import { User } from '../types/user';
+import { CreatePlaylistDTO, PagedResponse, Playlist, Track } from '../types/playlist';
 
 // User API
 export const userApi = {
@@ -64,6 +65,38 @@ export const playlistApi = {
   // Xóa track khỏi playlist
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => 
     axiosInstance.delete(`/playlists/${playlistId}/tracks/${trackId}`),
+
+  // Get personal playlists
+  getOwnPlaylists: (page = 0, size = 20, sortBy = 'createdAt', direction = 'desc') => 
+    axiosInstance.get<PagedResponse<Playlist>>('/own-playlists/me', { 
+      params: { page, size, sortBy, direction } 
+    }),
+  
+  // Get details of a playlist
+  getOwnPlaylistById: (id: string) => 
+    axiosInstance.get<Playlist>(`/own-playlists/${id}`),
+  
+  // Get tracks in a playlist
+  getOwnPlaylistTracks: (playlistId: string, page = 0, size = 20, sortBy = 'name', direction = 'asc') => 
+    axiosInstance.get<PagedResponse<Track>>(`/own-playlists/${playlistId}/tracks`, { 
+      params: { page, size, sortBy, direction } 
+    }),
+  
+  // Create a new playlist
+  createOwnPlaylist: (data: CreatePlaylistDTO) => 
+    axiosInstance.post<Playlist>('/own-playlists', data),
+  
+  // Add track to a playlist
+  addTrackToOwnPlaylist: (playlistId: string, spotifyId: string) => 
+    axiosInstance.post(`/own-playlists/${playlistId}/tracks/${spotifyId}`),
+  
+  // Remove track from a playlist
+  removeTrackFromOwnPlaylist: (playlistId: string, trackId: number) => 
+    axiosInstance.delete(`/own-playlists/${playlistId}/tracks/${trackId}`),
+  
+  // Delete a playlist
+  deleteOwnPlaylist: (playlistId: string) => 
+    axiosInstance.delete(`/own-playlists/${playlistId}`),
 };
 
 // Search API

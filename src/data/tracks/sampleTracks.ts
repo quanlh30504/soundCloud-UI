@@ -2,7 +2,8 @@ export const sampleTracks = [
     {
         id: "1",
         // url: require("../../../assets/music/track1.mp3"),
-        url: "http://localhost:3000/music/Enchanted_Taylor_Swift.mp3",
+        // url: "http://localhost:3000/music/Enchanted_Taylor_Swift.mp3",
+        url: "https://rr3---sn-8pxuuxa-i5o66.googlevideo.com/videoplayback?expire=1744789559&ei=1wv_Z66AI7fys8IP5v2Z-Ac&ip=117.1.161.8&id=o-AObZ5Zt3T_LPgt6BB0WC4iecUQZz-qcOu6esFdh6KsCE&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1744767959%2C&mh=8K&mm=31%2C29&mn=sn-8pxuuxa-i5o66%2Csn-8pxuuxa-i5oez&ms=au%2Crdu&mv=m&mvi=3&pcm2cms=yes&pl=22&rms=au%2Cau&initcwndbps=2611250&bui=AccgBcMCGtPMKFUNDf0LKwSLy4fMrVQ5kQsOPgearC2VfcpYz7e8gebnsl3ZG_DrI05Zt_6SEkeoiyqE&vprv=1&svpuc=1&mime=audio%2Fwebm&ns=7c6w-ksQQhyuA24n9Q7CyIIQ&rqh=1&gir=yes&clen=5509792&dur=317.661&lmt=1582323125113214&mt=1744767423&fvip=2&keepalive=yes&lmw=1&c=TVHTML5&sefc=1&txp=5431432&n=x3HJ1N76lHzpDg&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cbui%2Cvprv%2Csvpuc%2Cmime%2Cns%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpcm2cms%2Cpl%2Crms%2Cinitcwndbps&lsig=ACuhMU0wRgIhANeMgqU5oAomXZm8KqFa95AQtdLXP3LPNOpqyVKty4uDAiEAsjQm7cz1ArK7z57bLtAaVIhSweHOZLSZMeecAMK3BmI%3D&sig=AJfQdSswRQIgAyWnvqVvx-cnQq3mwGng89NZQ_F6FVFnlaGXpTzXpjkCIQCMdEtAfUuA3dNHmuficjhBUzpijwRV1aF_TRBB-brV-g%3D%3D",
         title: "Waiting for love",
         artist: "Avicii",
         artwork: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",

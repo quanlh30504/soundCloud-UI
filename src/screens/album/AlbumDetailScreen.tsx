@@ -95,7 +95,7 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
           disabled={isActive}
           >
             <View style={styles.trackInfo}>
-              <Image source={album.coverArt} style={styles.trackImage} />
+              <Image source={{uri: album.coverArt}} style={styles.trackImage} />
               <Text style={[styles.trackNumber, { color: secondaryTextColor }]}>
                 {trackIndex + 1}
               </Text>
@@ -126,7 +126,7 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
           </TouchableOpacity>
         </View>
 
-          <Image source={album.coverArt} style={styles.coverArt} />
+          <Image source={{uri: album.coverArt}} style={styles.coverArt} />
 
           <View style={styles.infoContainer}>
             <Text style={[styles.title, { color: textColor }]}>{album.title}</Text>

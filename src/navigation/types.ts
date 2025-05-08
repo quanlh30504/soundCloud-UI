@@ -1,35 +1,14 @@
+import { Playlist } from '../types/playlist';
+
 export type RootStackParamList = {
-  BottomTabs: undefined;
-  LibraryTab: undefined;
-  SearchTab: undefined;
-
-  Home: undefined;
-  Feed: undefined;
-  Search: undefined;
-  Library: undefined;
-  Upgrade: undefined;
-
-  SearchResults: undefined;
-  
-  Settings: undefined;
-  LikedTracks: undefined;
-  Playlists: undefined;
-  Albums: undefined;
-  Following: undefined;
-  Stations: undefined;
-  YourUploads: undefined;
-  Profile: undefined;
-  
-  MusicPlayer: undefined;
-  Player: undefined;
-  AlbumDetail: {
-    album: Album;
-  };
-
   Welcome: undefined;
   Login: undefined;
   Register: undefined;
   Main: undefined;
+  MusicPlayer: undefined;
+  AlbumDetail: { albumId: string };
+  PlaylistDetail: { playlist: Playlist };
+  SearchResults: { query: string };
 };
 
 export type Album = {
