@@ -10,6 +10,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useProgress, useTrackPlayerEvents, Event } from 'react-native-track-player';
 import trackPlayerService from '../../../services/player/TrackPlayerService';
 import NavigationService from '../../../services/navigation/NavigationService';
+import { navigationRef } from '../../../services/navigation/NavigationService';
 
 const MiniPlayerBar = () => {
   const [trackInfo, setTrackInfo] = useState({ title: "", artist: "", artwork: null });
@@ -42,8 +43,8 @@ const MiniPlayerBar = () => {
   }, []);
   
   const checkCurrentScreen = () => {
-    if (NavigationService.navigationRef && NavigationService.navigationRef.isReady()) {
-      const currentRouteName = NavigationService.navigationRef.getCurrentRoute()?.name;
+    if (navigationRef && navigationRef.isReady()) {
+      const currentRouteName = navigationRef.getCurrentRoute()?.name;
       setCurrentScreen(currentRouteName || '');
     }
   };
@@ -68,14 +69,14 @@ const MiniPlayerBar = () => {
       setVisible(false);
     }
   };
-  
-  const handlePlayPause = async (e) => {
+
+  const handlePlayPause = async (e: any) => {
     e.stopPropagation();
     const playing = await trackPlayerService.togglePlayback();
     setIsPlaying(playing);
   };
-  
-  const handleNext = async (e) => {
+
+  const handleNext = async (e: any) => {
     e.stopPropagation();
     await trackPlayerService.skipToNext();
   };
@@ -94,7 +95,7 @@ const MiniPlayerBar = () => {
       activeOpacity={0.9}
       onPress={() => NavigationService.openMusicPlayer ? 
         NavigationService.openMusicPlayer() : 
-        NavigationService.navigationRef.navigate('MusicPlayer')}
+        NavigationService.navigate('MusicPlayer')}
     >
       {/* Progress bar */}
       <View style={styles.progressContainer}>

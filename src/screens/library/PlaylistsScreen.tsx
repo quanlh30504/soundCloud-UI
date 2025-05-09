@@ -23,11 +23,15 @@ import { useNavigation } from '@react-navigation/native';
 import { Animated } from 'react-native';
 import { playlistApi } from '../../services/api';
 import { Playlist } from '../../types/playlist';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/types';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function PlaylistsScreen() {
   const { theme } = useTheme();
   const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const [modalVisible, setModalVisible] = useState(false);
   const [playlistName, setPlaylistName] = useState('Untitled Playlist');
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
