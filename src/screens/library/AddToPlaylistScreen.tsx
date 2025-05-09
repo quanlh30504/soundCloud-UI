@@ -1,53 +1,63 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  Modal, 
-  TextInput, 
+  FlatList, 
+  Image,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  TextInput,
   TouchableWithoutFeedback,
   Keyboard,
   KeyboardAvoidingView,
-  Platform,
-  FlatList,
-  Image,
-  ActivityIndicator,
-  Alert
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import { darkTheme, lightTheme } from '../../config/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
-import { Animated } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { playlistApi } from '../../services/api';
 import { Playlist } from '../../types/playlist';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/types';
-import MoreOptionsMenu from '../../components/common/MoreOptionsMenu';
+import { Animated } from 'react-native';
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+interface AddToPlaylistScreenProps {
+  route: {
+    params: {
+      trackId: string;
+      trackName: string;
+      artistName: string;
+      trackArtwork: string | null;
+    }
+  }
+}
 
-export default function PlaylistsScreen() {
+export default function AddToPlaylistScreen({ route }: AddToPlaylistScreenProps) {
   const { theme } = useTheme();
   const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
-  const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation();
+  
+  const { trackId, trackName, artistName, trackArtwork } = route.params;
+  
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [selectedPlaylists, setSelectedPlaylists] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [playlistName, setPlaylistName] = useState('Untitled Playlist');
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
-  const [moreOptionsVisible, setMoreOptionsVisible] = useState(false);
+  
   const slideAnim = useRef(new Animated.Value(0)).current;
-
-  // Fetch playlists when component mounts
+  
   useEffect(() => {
     fetchPlaylists();
+    console.log('Current trackId:', trackId);
   }, []);
-
+  
   const fetchPlaylists = async (refresh = false) => {
     if (refresh) {
       setRefreshing(true);
@@ -66,7 +76,47 @@ export default function PlaylistsScreen() {
       setRefreshing(false);
     }
   };
-
+  
+  const togglePlaylistSelection = (playlistId: string) => {
+    const newSelected = new Set(selectedPlaylists);
+    if (newSelected.has(playlistId)) {
+      newSelected.delete(playlistId);
+    } else {
+      newSelected.add(playlistId);
+    }
+    setSelectedPlaylists(newSelected);
+  };
+  
+  const handleSaveToPlaylists = async () => {
+    if (selectedPlaylists.size === 0) {
+      Alert.alert('No Playlists Selected', 'Please select at least one playlist.');
+      return;
+    }
+    
+    setSaving(true);
+    
+    try {
+      const promises = Array.from(selectedPlaylists).map(playlistId => {
+            console.log(`Adding track ${trackId} to playlist ${playlistId}`)
+            playlistApi.addTrackToOwnPlaylist(playlistId, trackId)
+        }
+      );
+      
+      await Promise.all(promises);
+      
+      Alert.alert(
+        'Success', 
+        `Added "${trackName}" to ${selectedPlaylists.size} playlist${selectedPlaylists.size > 1 ? 's' : ''}`,
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    } catch (error) {
+      console.error('Error adding track to playlists:', error);
+      Alert.alert('Error', 'Failed to add track to one or more playlists. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+  
   const showModal = () => {
     setPlaylistName('Untitled Playlist');
     setModalVisible(true);
@@ -86,8 +136,8 @@ export default function PlaylistsScreen() {
       setModalVisible(false);
     });
   };
-
-  const handleSave = async () => {
+  
+  const handleCreatePlaylist = async () => {
     if (!playlistName.trim()) {
       Alert.alert('Error', 'Please enter a playlist name');
       return;
@@ -95,12 +145,18 @@ export default function PlaylistsScreen() {
 
     setCreating(true);
     try {
-      await playlistApi.createOwnPlaylist({
+      const response = await playlistApi.createOwnPlaylist({
         name: playlistName.trim(),
         description: '',
         isPublic: false
       });
-      fetchPlaylists();
+      
+      const newPlaylist = response.data;
+      setPlaylists([newPlaylist, ...playlists]);
+      
+      // Automatically select the newly created playlist
+      setSelectedPlaylists(new Set([...selectedPlaylists, newPlaylist.id]));
+      
       hideModal();
     } catch (error) {
       console.error('Error creating playlist:', error);
@@ -108,29 +164,15 @@ export default function PlaylistsScreen() {
     } finally {
       setCreating(false);
     }
-  };  
+  };
   
-  const handlePlaylistPress = (playlist: Playlist) => {
-    // Navigate to playlist detail screen
-    navigation.navigate('PlaylistDetail', { playlist });
-  };
-
-  const handleMoreOptionsPress = (playlist: Playlist) => {
-    setSelectedPlaylist(playlist);
-    setMoreOptionsVisible(true);
-  };
-
-  const handleCloseMoreOptions = () => {
-    setMoreOptionsVisible(false);
-  };
-
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [300, 0],
   });
-
+  
   const renderPlaylistItem = ({ item }: { item: Playlist }) => {
-    // Default image or placeholder
+    const isSelected = selectedPlaylists.has(item.id);
     const thumbnailUrl = item.images && item.images.length > 0 
       ? item.images[0].url 
       : 'https://fakeimg.pl/80x80';
@@ -138,7 +180,7 @@ export default function PlaylistsScreen() {
     return (
       <TouchableOpacity 
         style={styles.playlistItem}
-        onPress={() => handlePlaylistPress(item)}
+        onPress={() => togglePlaylistSelection(item.id)}
       >
         <Image 
           source={{ uri: thumbnailUrl }}
@@ -155,12 +197,16 @@ export default function PlaylistsScreen() {
             Playlist • {item.totalTracks} {item.totalTracks === 1 ? 'track' : 'tracks'}
           </Text>
         </View>
-        <TouchableOpacity 
-          style={styles.moreButton}
-          onPress={() => handleMoreOptionsPress(item)}
-        >
-          <Ionicons name="ellipsis-vertical" size={20} color={themeStyles.colors.secondary} />
-        </TouchableOpacity>
+        <View style={styles.checkboxContainer}>
+          <View style={[
+            styles.checkbox, 
+            isSelected ? 
+              { backgroundColor: themeStyles.colors.primary, borderColor: themeStyles.colors.primary } : 
+              { backgroundColor: 'transparent', borderColor: themeStyles.colors.border }
+          ]}>
+            {isSelected && <Ionicons name="checkmark" size={16} color="#FFF" />}
+          </View>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -175,17 +221,35 @@ export default function PlaylistsScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={themeStyles.colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: themeStyles.colors.text }]}>Playlists</Text>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerIcon}>
-            <Ionicons name="tv-outline" size={24} color={themeStyles.colors.icon} />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.headerIcon}
-            onPress={showModal}
-          >
-            <Ionicons name="add" size={24} color={themeStyles.colors.icon} />
-          </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: themeStyles.colors.text }]}>Add to Playlist</Text>
+        <TouchableOpacity 
+          style={[
+            styles.saveButton,
+            (selectedPlaylists.size === 0 || saving) && { opacity: 0.6 }
+          ]}
+          onPress={handleSaveToPlaylists}
+          disabled={selectedPlaylists.size === 0 || saving}
+        >
+          {saving ? (
+            <ActivityIndicator size="small" color="#000" />
+          ) : (
+            <Text style={styles.saveButtonText}>Save</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Track Info (optional visual feedback of the track being added) */}
+      <View style={styles.trackInfoContainer}>
+        {trackArtwork && (
+          <Image source={{ uri: trackArtwork }} style={styles.trackThumbnail} />
+        )}
+        <View style={styles.trackTextInfo}>
+          <Text style={[styles.trackName, { color: themeStyles.colors.text }]} numberOfLines={1}>
+            {trackName}
+          </Text>
+          <Text style={[styles.artistName, { color: themeStyles.colors.secondary }]} numberOfLines={1}>
+            {artistName}
+          </Text>
         </View>
       </View>
 
@@ -193,87 +257,41 @@ export default function PlaylistsScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={themeStyles.colors.primary} />
         </View>
-      ) : playlists.length === 0 ? (
-        // Empty State Content
-        <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyTitle, { color: themeStyles.colors.text }]}>
-            No playlists yet
-          </Text>
-          <Text style={[styles.emptySubtitle, { color: themeStyles.colors.secondary }]}>
-            Playlists you have liked or created will show up here.
-          </Text>
+      ) : (
+        <View style={styles.listContainer}>
+          {/* Create Playlist Button */}
           <TouchableOpacity 
-            style={styles.createButton}
+            style={styles.createPlaylistButton}
             onPress={showModal}
           >
-            <Text style={styles.createButtonText}>Create playlist</Text>
+            <Text style={[styles.createPlaylistText, { color: themeStyles.colors.primary }]}>
+              Create playlist
+            </Text>
           </TouchableOpacity>
-        </View>
-      ) : (
-        // Playlists List
-        <View style={styles.listContainer}>
-          {!loading && playlists.length > 0 && (
-            <TouchableOpacity 
-              style={styles.createPlaylistButton}
-              onPress={showModal}
-            >
-              <Text style={[styles.createPlaylistText, { color: themeStyles.colors.primary }]}>
-                Create playlist
+          
+          {playlists.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={[styles.emptyTitle, { color: themeStyles.colors.text }]}>
+                No playlists yet
               </Text>
-            </TouchableOpacity>
+              <Text style={[styles.emptySubtitle, { color: themeStyles.colors.secondary }]}>
+                Create a playlist to add this track to.
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={playlists}
+              renderItem={renderPlaylistItem}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              onRefresh={() => fetchPlaylists(true)}
+              refreshing={refreshing}
+            />
           )}
-          <FlatList
-            data={playlists}
-            renderItem={renderPlaylistItem}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            onRefresh={() => fetchPlaylists(true)}
-            refreshing={refreshing}
-          />
         </View>
       )}
-
-      {/* More Options Menu */}
-      {selectedPlaylist && (
-        <MoreOptionsMenu
-          visible={moreOptionsVisible}
-          onClose={handleCloseMoreOptions}
-          title={selectedPlaylist.name}
-          subtitle={selectedPlaylist.ownerName}
-          thumbnailUrl={selectedPlaylist.images && selectedPlaylist.images.length > 0 
-            ? selectedPlaylist.images[0].url 
-            : 'https://fakeimg.pl/80x80'}
-          options={[
-            { 
-              icon: 'create-outline', 
-              label: 'Edit', 
-              onPress: () => console.log('Edit playlist', selectedPlaylist.id) 
-            },
-            { 
-              icon: 'lock-closed-outline', 
-              label: 'Make private', 
-              onPress: () => console.log('Make private', selectedPlaylist.id) 
-            },
-            { 
-              icon: 'add-outline', 
-              label: 'Add music', 
-              onPress: () => console.log('Add music', selectedPlaylist.id) 
-            },
-            { 
-              icon: 'trash-outline', 
-              label: 'Delete', 
-              onPress: () => console.log('Delete playlist', selectedPlaylist.id) 
-            },
-            { 
-              icon: 'download-outline', 
-              label: 'Export to json', 
-              onPress: () => console.log('Export playlist', selectedPlaylist.id) 
-            }
-          ]}
-        />
-      )}
-
+      
       {/* Create Playlist Modal */}
       <Modal
         animationType="none"
@@ -313,16 +331,16 @@ export default function PlaylistsScreen() {
                     
                     <TouchableOpacity 
                       style={[
-                        styles.saveButton,
+                        styles.modalSaveButton,
                         creating && { opacity: 0.7 }
                       ]}
-                      onPress={handleSave}
+                      onPress={handleCreatePlaylist}
                       disabled={creating}
                     >
                       {creating ? (
                         <ActivityIndicator size="small" color="#000000" />
                       ) : (
-                        <Text style={styles.saveButtonText}>Save</Text>
+                        <Text style={styles.modalSaveButtonText}>Save</Text>
                       )}
                     </TouchableOpacity>
                   </View>
@@ -373,13 +391,42 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 16,
   },
-  headerRight: {
+  saveButton: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 4,
+  },
+  saveButtonText: {
+    color: '#000000',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  trackInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#333333',
   },
-  headerIcon: {
-    padding: 8,
-    marginLeft: 8,
+  trackThumbnail: {
+    width: 40,
+    height: 40,
+    borderRadius: 4,
+  },
+  trackTextInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  trackName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  artistName: {
+    fontSize: 14,
+    color: '#AAAAAA',
   },
   loadingContainer: {
     flex: 1,
@@ -404,23 +451,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     lineHeight: 22,
   },
-  createButton: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 4,
-  },
-  createButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-  },
   listContainer: {
     flex: 1,
     paddingTop: 8,
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: 70, // Added extra padding for tab bar
   },
   createPlaylistButton: {
     paddingHorizontal: 16,
@@ -462,8 +498,16 @@ const styles = StyleSheet.create({
   playlistTracks: {
     fontSize: 12,
   },
-  moreButton: {
-    padding: 8,
+  checkboxContainer: {
+    paddingHorizontal: 8,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,
@@ -508,7 +552,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  saveButton: {
+  modalSaveButton: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -516,7 +560,7 @@ const styles = StyleSheet.create({
     minWidth: 60,
     alignItems: 'center',
   },
-  saveButtonText: {
+  modalSaveButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#000000',

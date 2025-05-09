@@ -17,6 +17,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { playlistApi } from '../../services/api';
 import { Playlist, Track } from '../../types/playlist';
 import trackPlayerService from '../../services/player/TrackPlayerService';
+import MoreOptionsMenu from '../../components/common/MoreOptionsMenu';
 
 export default function PlaylistDetailScreen() {
   const { theme } = useTheme();
@@ -29,6 +30,9 @@ export default function PlaylistDetailScreen() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [moreOptionsVisible, setMoreOptionsVisible] = useState(false);
+  const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
+  const [removingTrack, setRemovingTrack] = useState<boolean>(false);
 
   useEffect(() => {
     if (initialPlaylist?.id) {
@@ -102,6 +106,51 @@ export default function PlaylistDetailScreen() {
     playTracks(tracksToPlay);
   };
 
+  const handleMoreOptionsPress = () => {
+    setMoreOptionsVisible(true);
+  };
+
+  const handleTrackMoreOptionsPress = (track: Track) => {
+    setSelectedTrack(track);
+    setMoreOptionsVisible(true);
+  };
+
+  const handleCloseMoreOptions = () => {
+    setMoreOptionsVisible(false);
+  };
+
+  const handleRemoveTrackFromPlaylist = async (trackId: number) => {
+    if (!playlist?.id) return;
+    
+    setRemovingTrack(true);
+    try {
+      await playlistApi.removeTrackFromOwnPlaylist(playlist.id, trackId);
+      
+      // Update the local state to reflect the removal
+      setTracks(tracks.filter(track => track.id !== trackId));
+      
+      // Update the playlist totalTracks count
+      if (playlist) {
+        setPlaylist({
+          ...playlist,
+          totalTracks: playlist.totalTracks - 1
+        });
+      }
+      
+      // Close the more options menu
+      handleCloseMoreOptions();
+      setSelectedTrack(null);
+      
+      // Show success message
+      Alert.alert('Success', 'Track removed from playlist successfully');
+    } catch (error) {
+      console.error('Error removing track from playlist:', error);
+      Alert.alert('Error', 'Failed to remove track from playlist. Please try again.');
+    } finally {
+      setRemovingTrack(false);
+    }
+  };
+
   const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
@@ -134,7 +183,10 @@ export default function PlaylistDetailScreen() {
             {formatDuration(item.durationMs)}
           </Text>
         </View>
-        <TouchableOpacity style={styles.moreButton}>
+        <TouchableOpacity 
+          style={styles.moreButton}
+          onPress={() => handleTrackMoreOptionsPress(item)}
+        >
           <Ionicons name="ellipsis-vertical" size={20} color={themeStyles.colors.secondary} />
         </TouchableOpacity>
       </TouchableOpacity>
@@ -191,7 +243,10 @@ export default function PlaylistDetailScreen() {
               
               {/* Action Buttons */}
               <View style={styles.actionButtonsContainer}>
-                <TouchableOpacity style={styles.menuButton}>
+                <TouchableOpacity 
+                  style={styles.menuButton}
+                  onPress={handleMoreOptionsPress}
+                >
                   <Ionicons name="ellipsis-horizontal" size={24} color={themeStyles.colors.text} />
                 </TouchableOpacity>
                 
@@ -233,6 +288,92 @@ export default function PlaylistDetailScreen() {
           refreshing={refreshing}
         />
       )}
+
+      {/* More Options Menu for Playlist */}
+      {playlist && !selectedTrack && (
+        <MoreOptionsMenu
+          visible={moreOptionsVisible}
+          onClose={handleCloseMoreOptions}
+          title={playlist.name}
+          subtitle={playlist.ownerName}
+          thumbnailUrl={coverImageUrl}
+          options={[
+            { 
+              icon: 'create-outline', 
+              label: 'Edit', 
+              onPress: () => console.log('Edit playlist', playlist.id) 
+            },
+            { 
+              icon: 'lock-closed-outline', 
+              label: 'Make private', 
+              onPress: () => console.log('Make private', playlist.id) 
+            },
+            { 
+              icon: 'add-outline', 
+              label: 'Add music', 
+              onPress: () => console.log('Add music', playlist.id) 
+            },
+            { 
+              icon: 'trash-outline', 
+              label: 'Delete', 
+              onPress: () => console.log('Delete playlist', playlist.id) 
+            },
+            { 
+              icon: 'download-outline', 
+              label: 'Export to json', 
+              onPress: () => console.log('Export playlist', playlist.id) 
+            }
+          ]}
+        />
+      )}
+      
+      {/* More Options Menu for Track */}
+      {selectedTrack && (
+        <MoreOptionsMenu
+          visible={moreOptionsVisible}
+          onClose={() => {
+            handleCloseMoreOptions();
+            setSelectedTrack(null);
+          }}
+          title={selectedTrack.name}
+          subtitle={selectedTrack.artists.join(', ')}
+          thumbnailUrl={selectedTrack.albumImages && selectedTrack.albumImages.length > 0 
+            ? selectedTrack.albumImages[0].url 
+            : 'https://fakeimg.pl/60x60'}
+          options={[
+            { 
+              icon: 'heart-outline', 
+              label: 'Like', 
+              onPress: () => console.log('Like track', selectedTrack.id) 
+            },
+            { 
+              icon: 'share-outline', 
+              label: 'Share', 
+              onPress: () => console.log('Share track', selectedTrack.id) 
+            },
+            { 
+              icon: 'add-outline', 
+              label: 'Add to playlist', 
+              onPress: () => console.log('Add to playlist', selectedTrack.id) 
+            },
+            { 
+              icon: 'download-outline', 
+              label: 'Download', 
+              onPress: () => console.log('Download track', selectedTrack.id) 
+            },
+            { 
+              icon: 'trash-outline', 
+              label: removingTrack ? 'Removing...' : 'Remove from playlist', 
+              onPress: () => {
+                if (!removingTrack && selectedTrack.id) {
+                  handleRemoveTrackFromPlaylist(selectedTrack.id);
+                }
+              },
+              disabled: removingTrack
+            }
+          ]}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -263,7 +404,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: 70, // Increased bottom padding to account for tab bar
     flexGrow: 1,
   },
   playlistInfoContainer: {
@@ -359,6 +500,7 @@ const styles = StyleSheet.create({
   },
   emptyTracksContainer: {
     padding: 32,
+    paddingBottom: 80, // Increased padding to account for tab bar
     alignItems: 'center',
   },
   emptyTracksText: {

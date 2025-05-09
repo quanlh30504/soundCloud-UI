@@ -280,6 +280,19 @@ class TrackPlayerService {
       return [];
     }
   }
+
+  public async getCurrentTrackId(): Promise<string | null> {
+    try {
+      const track = await TrackPlayer.getActiveTrack();
+      if (track) {
+        return track.id;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting current track ID:", error);
+      return null;
+    }
+  }
 }
 
 export default TrackPlayerService.getInstance();

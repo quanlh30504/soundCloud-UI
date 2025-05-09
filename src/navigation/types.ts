@@ -17,6 +17,12 @@ export type RootStackParamList = {
   Profile: undefined;
   Search: undefined;
   Albums: undefined;
+  AddToPlaylist: { 
+    trackId: string; 
+    trackName: string;
+    artistName: string;
+    trackArtwork: string | null;
+  };
 
   Welcome: undefined;
   Login: undefined;

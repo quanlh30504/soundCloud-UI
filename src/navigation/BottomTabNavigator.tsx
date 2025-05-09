@@ -23,6 +23,7 @@ import StationsScreen from "../screens/library/StationsScreen";
 import YourUploadsScreen from "../screens/library/YourUploadsScreen";
 import ProfileScreen from "../screens/profile/ProfileScreen";
 import SearchResultsScreen from "../screens/search/SearchResultsScreen";
+import PlaylistDetailScreen from "../screens/library/PlaylistDetailScreen";
 
 const Tab = createBottomTabNavigator<RootStackParamList>();
 const LibraryStack = createNativeStackNavigator<RootStackParamList>();
@@ -46,6 +47,7 @@ const LibraryStackScreen = ({
       <LibraryStack.Screen name="Stations" component={StationsScreen} />
       <LibraryStack.Screen name="YourUploads" component={YourUploadsScreen} />
       <LibraryStack.Screen name="Profile" component={ProfileScreen} />
+      <LibraryStack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} />
     </LibraryStack.Navigator>
   );
 };

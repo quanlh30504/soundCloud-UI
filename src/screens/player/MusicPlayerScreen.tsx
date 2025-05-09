@@ -13,6 +13,7 @@ import TrackPlayer, { useProgress, useTrackPlayerEvents, Event } from "react-nat
 import Icon from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../../contexts/ThemeContext";
 import trackPlayerService, { TrackInfo } from "../../services/player/TrackPlayerService";
+import MoreOptionsMenu from "../../components/common/MoreOptionsMenu";
 
 const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
   const { theme } = useTheme();
@@ -26,6 +27,7 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
   const [trackInfo, setTrackInfo] = useState<TrackInfo>({ title: "", artist: "", artwork: null });
   const [isPlaying, setIsPlaying] = useState(false);
   const [repeatMode, setRepeatMode] = useState(0);
+  const [moreOptionsVisible, setMoreOptionsVisible] = useState(false);
   
   const progress = useProgress();
   
@@ -52,7 +54,6 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
   };
   
 
-
   const handlePlayPause = async () => {
     const playing = await trackPlayerService.togglePlayback();
     setIsPlaying(playing);
@@ -75,6 +76,30 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
     setRepeatMode(newMode);
   };
   
+  const handleOpenMoreOptions = () => {
+    setMoreOptionsVisible(true);
+  };
+  
+  const handleCloseMoreOptions = () => {
+    setMoreOptionsVisible(false);
+  };
+
+  const handleAddToPlaylist = async () => {
+    // Get current track info
+    const currentTrack = trackInfo;
+    const trackId =  await trackPlayerService.getCurrentTrackId();
+    
+    // Close the more options menu
+    setMoreOptionsVisible(false);
+    
+    // Navigate to AddToPlaylist screen with track info
+    navigation.navigate('AddToPlaylist', {
+      trackId: trackId,
+      trackName: currentTrack.title,
+      artistName: currentTrack.artist,
+      trackArtwork: currentTrack.artwork
+    });
+  };
 
   const formatTime = (seconds: number): string => {
     if (!seconds) return "0:00";
@@ -95,7 +120,10 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
         <Text style={[styles.headerText, { color: isPlaying ? themeStyles.primary : themeStyles.text }]}>
           {isPlaying ? "PLAYING" : "PAUSED"}
         </Text>
-        <TouchableOpacity style={styles.headerButton}>
+        <TouchableOpacity 
+          style={styles.headerButton}
+          onPress={handleOpenMoreOptions}
+        >
           <Icon name="ellipsis-horizontal" size={28} color={themeStyles.text} />
         </TouchableOpacity>
       </View>
@@ -156,6 +184,42 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
           <Icon name="shuffle" size={24} color={themeStyles.secondary} />
         </TouchableOpacity>
       </View>
+
+      {/* More Options Menu */}
+      <MoreOptionsMenu
+        visible={moreOptionsVisible}
+        onClose={handleCloseMoreOptions}
+        title={trackInfo.title}
+        subtitle={trackInfo.artist || ''}
+        thumbnailUrl={trackInfo.artwork || 'https://fakeimg.pl/60x60'}
+        options={[
+          { 
+            icon: 'heart-outline', 
+            label: 'Like', 
+            onPress: () => console.log('Like track') 
+          },
+          { 
+            icon: 'add-circle-outline', 
+            label: 'Add to playlist', 
+            onPress: handleAddToPlaylist 
+          },
+          { 
+            icon: 'share-outline', 
+            label: 'Share', 
+            onPress: () => console.log('Share track') 
+          },
+          { 
+            icon: 'information-circle-outline', 
+            label: 'Song info', 
+            onPress: () => console.log('View song info') 
+          },
+          { 
+            icon: 'person-outline', 
+            label: 'View artist', 
+            onPress: () => console.log('View artist') 
+          }
+        ]}
+      />
     </SafeAreaView>
   );
 };

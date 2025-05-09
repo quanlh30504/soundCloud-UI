@@ -16,6 +16,7 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import SearchResultsScreen from '../screens/search/SearchResultsScreen';
 import PlaylistDetailScreen from '../screens/library/PlaylistDetailScreen';
+import AddToPlaylistScreen from "../screens/library/AddToPlaylistScreen";
 import { storageService } from '../services/storage';
 import { auth } from '../config/firebase';
 import { signOut } from 'firebase/auth';
@@ -84,7 +85,9 @@ export default function AppNavigator({
             {(props) => <BottomTabNavigator {...props} setAuthenticated={setAuthenticated} />}
           </MainStack.Screen>
           <MainStack.Screen name="AlbumDetail" component={AlbumDetailScreen} />
-          <MainStack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} />
+          <MainStack.Screen name="AddToPlaylist" component={AddToPlaylistScreen} />
+          {/* Move PlaylistDetail to the navigation inside BottomTabNavigator */}
+          {/* <MainStack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} /> */}
           {/* <MainStack.Screen name="SearchResults" component={SearchResultsScreen} />  */}
         </MainStack.Navigator>
         
