@@ -82,10 +82,12 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({
               
               {/* Header with thumbnail and info */}
               <View style={styles.header}>
-                <Image 
-                  source={{ uri: thumbnailUrl }}
-                  style={styles.thumbnail}
-                />
+                {thumbnailUrl !== '' && (
+                  <Image 
+                    source={{ uri: thumbnailUrl }}
+                    style={styles.thumbnail}
+                  />
+                )}
                 <View style={styles.headerInfo}>
                   <Text style={styles.title} numberOfLines={1}>{title}</Text>
                   <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>

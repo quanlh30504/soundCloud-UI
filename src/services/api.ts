@@ -43,28 +43,28 @@ export const trackApi = {
 
 // Playlist API
 export const playlistApi = {
-  // Lấy danh sách playlist
-  getPlaylists: (params?: any) => axiosInstance.get('/playlists', { params }),
+  // // Lấy danh sách playlist
+  // getPlaylists: (params?: any) => axiosInstance.get('/playlists', { params }),
   
-  // Lấy thông tin chi tiết playlist
-  getPlaylistById: (id: string) => axiosInstance.get(`/playlists/${id}`),
+  // // Lấy thông tin chi tiết playlist
+  // getPlaylistById: (id: string) => axiosInstance.get(`/playlists/${id}`),
   
-  // Tạo playlist mới
-  createPlaylist: (data: any) => axiosInstance.post('/playlists', data),
+  // // Tạo playlist mới
+  // createPlaylist: (data: any) => axiosInstance.post('/playlists', data),
   
-  // Cập nhật playlist
-  updatePlaylist: (id: string, data: any) => axiosInstance.put(`/playlists/${id}`, data),
+  // // Cập nhật playlist
+  // updatePlaylist: (id: string, data: any) => axiosInstance.put(`/playlists/${id}`, data),
   
-  // Xóa playlist
-  deletePlaylist: (id: string) => axiosInstance.delete(`/playlists/${id}`),
+  // // Xóa playlist
+  // deletePlaylist: (id: string) => axiosInstance.delete(`/playlists/${id}`),
   
-  // Thêm track vào playlist
-  addTrackToPlaylist: (playlistId: string, trackId: string) => 
-    axiosInstance.post(`/playlists/${playlistId}/tracks/${trackId}`),
+  // // Thêm track vào playlist
+  // addTrackToPlaylist: (playlistId: string, trackId: string) => 
+  //   axiosInstance.post(`/own-playlists/${playlistId}/tracks/${trackId}`),
   
-  // Xóa track khỏi playlist
-  removeTrackFromPlaylist: (playlistId: string, trackId: string) => 
-    axiosInstance.delete(`/playlists/${playlistId}/tracks/${trackId}`),
+  // // Xóa track khỏi playlist
+  // removeTrackFromPlaylist: (playlistId: string, trackId: string) => 
+  //   axiosInstance.delete(`/own-playlists/${playlistId}/tracks/${trackId}`),
 
   // Get personal playlists
   getOwnPlaylists: (page = 0, size = 20, sortBy = 'createdAt', direction = 'desc') => 
