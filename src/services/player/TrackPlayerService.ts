@@ -293,6 +293,25 @@ class TrackPlayerService {
       return null;
     }
   }
+
+  // Clears the current queue and adds the supplied tracks to the now empty queue.
+  public async setQueue(tracks: Track[]): Promise<void> {
+    try {
+      await TrackPlayer.setQueue(tracks);
+      await TrackPlayer.play();
+    } catch (error) {
+      console.error("Error setting queue:", error);
+    }
+  }
+
+  //Replaces the current track with the supplied track or creates a track when the queue is empty.
+  public async loadTrack(track: Track): Promise<void> {
+    try {
+      TrackPlayer.load(track);
+    } catch (error) {
+      console.error("Error loading track:", error);
+    }
+  }
 }
 
 export default TrackPlayerService.getInstance();

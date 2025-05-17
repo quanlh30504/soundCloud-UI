@@ -18,6 +18,7 @@ import { playlistApi } from '../../services/api';
 import { Playlist, Track } from '../../types/playlist';
 import trackPlayerService from '../../services/player/TrackPlayerService';
 import MoreOptionsMenu from '../../components/common/MoreOptionsMenu';
+import { convertPathToUrl } from '../../utils/convertUrl';
 
 export default function PlaylistDetailScreen() {
   const { theme } = useTheme();
@@ -84,16 +85,15 @@ export default function PlaylistDetailScreen() {
     try {
       const trackPlayerTracks = tracksToPlay.map(track => ({
         id: track.spotifyId,
-        url: track.previewUrl || '',
+        url: String(convertPathToUrl(track.filePath as string)),
         title: track.name,
         artist: track.artists.join(', '),
         artwork: track.albumImages && track.albumImages.length > 0 
           ? track.albumImages[0].url
           : 'https://fakeimg.pl/300x300',
-        duration: track.durationMs / 1000, // Convert to seconds
       }));
       
-      await trackPlayerService.addTracks(trackPlayerTracks);
+      await trackPlayerService.setQueue(trackPlayerTracks);
     } catch (error) {
       console.error('Error playing tracks:', error);
       Alert.alert('Error', 'Failed to play tracks. Please try again.');

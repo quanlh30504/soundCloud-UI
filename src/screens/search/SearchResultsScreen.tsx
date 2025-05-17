@@ -9,7 +9,7 @@ import { searchAll, getTrackInfo } from '../../services/api';
 import trackPlayerService from '../../services/player/TrackPlayerService';
 import {Track} from "react-native-track-player";
 //
-import { convertPathToUrl } from '../../ultis/convertUrl';
+import { convertPathToUrl } from '../../utils/convertUrl';
 
 
 const TABS = ['All', 'Tracks', 'Albums', 'Playlists'];
@@ -95,8 +95,9 @@ const SearchResultsScreen = () => {
       }
 
       console.log('New track:', newTrack);
-      await trackPlayerService.addTracks([newTrack]);
-      await trackPlayerService.playTrack(trackId);
+      // await trackPlayerService.addTracks([newTrack]);
+      // await trackPlayerService.playTrack(trackId);
+      trackPlayerService.loadTrack(newTrack);
     } catch (error) {
       console.error('Error playing track:', error);
     }
