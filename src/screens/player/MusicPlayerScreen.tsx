@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  Image,
-} from "react-native";
+import { View, Text,StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image,} from "react-native";
 import Slider from "@react-native-community/slider";
 import TrackPlayer, { useProgress, useTrackPlayerEvents, Event } from "react-native-track-player";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../../contexts/ThemeContext";
 import trackPlayerService, { TrackInfo } from "../../services/player/TrackPlayerService";
+import LyricsComponent from "./LyricsComponent";
 
-const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
+const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}) => {
   const { theme } = useTheme();
   const themeStyles = {
     background: "#121212",
@@ -23,9 +16,14 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
     secondary: "#AAAAAA",
   };
 
+  const trackId = route?.params?.trackId;
+  console.log("Track ID:", trackId);
   const [trackInfo, setTrackInfo] = useState<TrackInfo>({ title: "", artist: "", artwork: null });
   const [isPlaying, setIsPlaying] = useState(false);
   const [repeatMode, setRepeatMode] = useState(0);
+  const [showLyrics, setShowLyrics] = useState(true);
+  const [currentTrackId, setCurrentTrackId] = useState<string>(trackId || "");
+
   
   const progress = useProgress();
   
@@ -33,6 +31,11 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
     if (event.type === Event.PlaybackActiveTrackChanged) {
       loadTrackInfo();
     }
+
+    const track = await TrackPlayer.getActiveTrack();
+      if (track) {
+        setCurrentTrackId(track.encodeId);
+      }
   });
   
   useEffect(() => {
@@ -51,8 +54,6 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
     if (info) setTrackInfo(info);
   };
   
-
-
   const handlePlayPause = async () => {
     const playing = await trackPlayerService.togglePlayback();
     setIsPlaying(playing);
@@ -156,6 +157,24 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
           <Icon name="shuffle" size={24} color={themeStyles.secondary} />
         </TouchableOpacity>
       </View>
+
+      {showLyrics ? (
+        // Lyrics View
+        <View style={styles.lyricsContainer}>
+          <LyricsComponent 
+            trackId={currentTrackId}
+            onLyricPress={handleSeek}
+            themeStyles={themeStyles}
+          />
+        </View>
+      ) : (
+        // Track Info View
+        <View style={styles.trackInfoContainer}>
+          {trackInfo.artwork && <Image source={{uri: trackInfo.artwork}} style={styles.thumbnail} />}
+          <Text style={[styles.trackTitle, { color: themeStyles.text }]}>{trackInfo.title}</Text>
+          <Text style={[styles.artistName, { color: themeStyles.secondary }]}>{trackInfo.artist}</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -197,6 +216,11 @@ const styles = StyleSheet.create({
   artistName: { 
     fontSize: 16, 
     marginTop: 8 
+  },
+  lyricsContainer: {
+    flex: 1,
+    marginVertical: 10,
+    paddingHorizontal: 24
   },
   progressContainer: {
     paddingHorizontal: 24,

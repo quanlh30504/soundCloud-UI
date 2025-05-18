@@ -1,29 +1,85 @@
-import React from "react";
-import {View,Text,StyleSheet,ScrollView,Image,TouchableOpacity,ImageBackground,} from "react-native";
+import React, { useEffect, useState } from "react";
+import {View,Text,StyleSheet,ScrollView,Image,TouchableOpacity,ImageBackground, ActivityIndicator} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../../contexts/ThemeContext";
-import { darkTheme } from "../../config/theme";
 import Icon from "react-native-vector-icons/Ionicons";
 import trackPlayerService from "../../services/player/TrackPlayerService";
-import { recommendedTracks, buzzingCategories } from "../../data/mockData";
-import { albums } from "../../data/albums";
-
+import { getTrackInfo, homeApi } from "../../services/api";
+import NewReleasesSection from "./NewRealease";
 
 export default function HomeScreen({ navigation }) {
-  const { theme } = useTheme();
-  const themeStyles = darkTheme;
-
   const backgroundColor = "#121212";
-  const textColor = "#ffffff";
-  const secondaryTextColor = "#a0a0a0";
+
+  const [newReleasesSongs, setNewReleasesSongs] = useState([]);
+  const [newReleasesAlbums, setNewReleasesAlbums] = useState([]);
+  const [recommendedSongs, setRecommendedSongs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [hubData, setHubData] = useState<[]>();
+  const [top100Items, setTop100Items] = useState([]);
+
+  useEffect(() => {
+    fetchHomeData();
+  }, []);
+
+  const fetchHomeData = async () => {
+    setIsLoading(true);
+    try {
+      const recommendedData = await homeApi.getRecommendSongs();
+      if (recommendedData && recommendedData) {
+        setRecommendedSongs(recommendedData);
+      }
+
+      const hubData = await homeApi.getHubDetailChill();
+      console.log("Hub data received:", hubData);
+      if (hubData) {
+        setHubData(hubData);
+      }
+    
+      // fetch new releases - songs
+      const newReleaseSongsData = await homeApi.getNewRelease('song');
+      console.log("New release songs data received:", newReleaseSongsData);
+      if (newReleaseSongsData) {
+        setNewReleasesSongs(newReleaseSongsData);
+      }
+
+      const newReleaseAlbumsData = await homeApi.getNewRelease('album');
+      if (newReleaseAlbumsData) {
+        setNewReleasesAlbums(newReleaseAlbumsData);
+      }
+
+      const top100Data = await homeApi.getTop100();
+      console.log("Top 100 data received:", top100Data);
+      if (top100Data) {
+        setTop100Items(top100Data);
+      }
+
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error fetching home data:", err);
+      setError(err);
+      setIsLoading(false);
+    }
+  }
 
   const handleTrackPress = async (trackId: string) => {
     await trackPlayerService.setup();
-    await trackPlayerService.playTrack(trackId);
-    // navigation.navigate("MusicPlayer");
-      // Example from HomeScreen
-      const album = albums.find((album) => album.id === "album1");
-      navigation.navigate("AlbumDetail", { album })
+    const track = await getTrackInfo(trackId);
+    await trackPlayerService.playTrack(track);
+  };
+
+  const handleAlbumPress = (albumId) => {
+    navigation.navigate('AlbumDetail', { albumId });
+  };
+
+  const getFirstFivePlaylists = () => {
+    if (!hubData || !hubData.sections || !hubData.sections[0] || 
+        !hubData.sections[0].items || !hubData.sections[0].items) {
+      return [];
+    }
+        const playlists = hubData.sections[0].items;
+    
+    console.log("Playlists data:", playlists);
+    return Array.isArray(playlists) ? playlists.slice(0, 5) : [];
   };
 
   return (
@@ -56,22 +112,22 @@ export default function HomeScreen({ navigation }) {
       >
         {/* Recommended Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>We think you'll like</Text>
+          <Text style={styles.sectionTitle}>Có thể bạn muốn nghe</Text>
 
           <View style={styles.trackList}>
-            {recommendedTracks.map((track) => (
+            {recommendedSongs.slice(0, 5).map((song) => (
               <TouchableOpacity
-                key={track.id}
+                key={song.encodeId}
                 style={styles.trackItem}
-                onPress={() => handleTrackPress(track.id)}
+                onPress={() => handleTrackPress(song.encodeId)}
               >
-                <Image source={track.coverArt} style={styles.trackCover} />
+                <Image source={song.thumbnailM || song.thumbnail} style={styles.trackCover} />
                 <View style={styles.trackInfo}>
                   <Text style={styles.trackTitle} numberOfLines={1}>
-                    {track.title}
+                    {song.title}
                   </Text>
                   <Text style={styles.trackArtist} numberOfLines={1}>
-                    {track.artist}
+                    {song.artistsNames}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -79,66 +135,109 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Artists section */}
+        {/* New Releases Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Artists to watch out for</Text>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.buzzingScroll}
-          >
-            {buzzingCategories.map((category) => (
+          <Text style={styles.sectionTitle}>Mới phát hành</Text>
+          <NewReleasesSection
+            songReleases={newReleasesSongs}
+            albumReleases={newReleasesAlbums}
+            isLoading={isLoading}
+            onSongPress={handleTrackPress}
+            onAlbumPress={handleAlbumPress}
+            navigation={navigation}
+          />
+        </View>
+        
+        {/* Chill Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionTitleContainer}>
+            <Text style={styles.sectionTitle}>Chill</Text>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Chill', { hubId: hubData?.encodeId })}
+              style={styles.seeMoreButton}
+            >
+              <Icon name="chevron-forward" size={20} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
+          
+          {isLoading ? (
+            <ActivityIndicator color="#ff5500" size="small" />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.horizontalScroll}
+            >
+              {getFirstFivePlaylists().map((item, index) => (
+                <TouchableOpacity
+                  key={item.encodeId || `item-${index}`}
+                  style={styles.chillItem}
+                  onPress={() => navigation.navigate('PlaylistDetail', { playlistId: item.encodeId })}
+                >
+                  <Image 
+                    source={{ uri: item.thumbnail }} 
+                    style={styles.chillCover} 
+                  />
+                  <View style={styles.chillInfo}>
+                    <Text style={styles.chillTitle} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.chillDescription} numberOfLines={1}>
+                      {item.sortDescription || "Playlist"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+              
               <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.buzzingItem,
-                  { backgroundColor: category.color },
-                ]}
+                style={styles.seeAllButton}
+                onPress={() => navigation.navigate('ChillHub', { hubId: hubData?.encodeId })}
               >
-                <Image source={category.coverArt} style={styles.buzzingCover} />
-                <View style={styles.buzzingOverlay}>
-                  <Text style={styles.buzzingBadge}>BUZZING</Text>
-                  <Text style={styles.buzzingGenre}>{category.genre}</Text>
+                <View style={styles.seeAllCircle}>
+                  <Icon name="chevron-forward" size={24} color="#ffffff" />
                 </View>
-                <View style={styles.buzzingTextContainer}>
-                  <Text style={styles.buzzingTitle}>{category.title}</Text>
-                  <Text style={styles.buzzingNew}>New!</Text>
-                </View>
+                <Text style={styles.seeAllText}>Xem tất cả</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            </ScrollView>
+          )}
         </View>
 
-        {/* Fresh Music Friday Section */}
-        <View style={styles.featuredSection}>
-          <ImageBackground
-            source={require("../../../assets/images/avicii.jpg")}
-            style={styles.featuredBackground}
-            imageStyle={styles.featuredImage}
-          >
-            <View style={styles.featuredOverlay}>
-              <Text style={styles.featuredTitle}>FRESH MUSIC</Text>
-              <Text style={styles.featuredSubtitle}>FRIDAY</Text>
-            </View>
-          </ImageBackground>
-
-          <View style={styles.featuredInfo}>
-            <Text style={styles.featuredInfoTitle}>Fresh Music Friday</Text>
-            <Text style={styles.featuredInfoSubtitle}>Enjoy music everyday</Text>
-
-            <View style={styles.featuredControls}>
-              <TouchableOpacity style={styles.favoriteButton}>
-                <Icon name="heart-outline" size={24} color="#ffffff" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.playButton}
-                onPress={() => handleTrackPress("1")} 
-              >
-                <Icon name="play" size={24} color="#000000" />
-              </TouchableOpacity>
-            </View>
-          </View>
+        {/* Top 100 Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Top 100</Text>
+          
+          {isLoading ? (
+            <ActivityIndicator color="#ff5500" size="small" />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.horizontalScroll}
+            >
+              {top100Items.map((collection) => (
+                collection.items && collection.items.map((item) => (
+                  <TouchableOpacity
+                    key={item.encodeId || item.id}
+                    style={styles.top100Item}
+                    onPress={() => navigation.navigate('PlaylistDetail', { playlistId: item.encodeId || item.id })}
+                  >
+                    <Image 
+                      source={{ uri: item.thumbnailM || item.thumbnail }} 
+                      style={styles.top100Cover} 
+                    />
+                    <View style={styles.top100Info}>
+                      <Text style={styles.top100Title} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.top100Description} numberOfLines={1}>
+                        {item.sortDescription || `${item.song?.items?.length || 0} songs`}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))
+              ))}
+            </ScrollView>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -327,5 +426,84 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  horizontalScroll: {
+    marginTop: 12,
+  },
+  top100Item: {
+    width: 150,
+    marginRight: 16,
+  },
+  top100Cover: {
+    width: 150,
+    height: 150,
+    borderRadius: 8,
+  },
+  top100Info: {
+    marginTop: 8,
+  },
+  top100Title: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  top100Description: {
+    color: "#a0a0a0",
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  // Chill section
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  seeMoreButton: {
+    padding: 8,
+  },
+  chillItem: {
+    width: 150,
+    marginRight: 16,
+  },
+  chillCover: {
+    width: 150,
+    height: 150,
+    borderRadius: 8,
+  },
+  chillInfo: {
+    marginTop: 8,
+  },
+  chillTitle: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  chillDescription: {
+    color: '#a0a0a0',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  seeAllButton: {
+    width: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  seeAllCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  seeAllText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

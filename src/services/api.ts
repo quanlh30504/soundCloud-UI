@@ -100,63 +100,34 @@ export const authApi = {
   }
 }; 
 
-export const searchTracks = async (query: string) => {
-  try {
-    const response = await axiosInstance.get('/spotify/search/tracks', { params: { query } });
-    return response.data;
-  } catch (error) {
-    console.error('Error searching tracks:', error);
-    throw error;
-  }
-};
 
-export const searchAlbums = async (query: string) => {
-  try {
-    const response = await axiosInstance.get('/spotify/search/albums', { params: { query } });
-    return response.data;
-  } catch (error) {
-    console.error('Error searching albums:', error);
-    throw error;
-  }
-};
-
-export const searchPlaylists = async (
-  query: string,
-  page: number = 0,
-  size: number = 20,
-  direction: string = 'asc'
-) => {
-  try {
-    const response = await axiosInstance.get('/spotify/search/playlists', {
-      params: { query, page, size, direction }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error searching playlists:', error);
-    throw error;
-  }
-};
 
 export const searchAll = async (query: string) => {
   try {
-    const tracks = await searchTracks(query);
-    const albums = await searchAlbums(query);
-    const playlists = await searchPlaylists(query);
-
-    return {
-      tracks,
-      albums,
-      playlists
-    };
+    const response = await axiosInstance.get('/zingMp3/search/multi', {
+      params: { query}
+    });
+    return response.data;
   } catch (error) {
     console.error('Error searching all:', error);
-    return { tracks: [], albums: [], playlists: [] };
+    throw error;
   }
-};
+}
+
+export const getStreamingUrl = async (zingId: string) => {
+  try {
+    const response = await axiosInstance.get(`/zingMp3/song/streamUrl/${zingId}`);
+    console.log('Streaming URL response:', response.data);
+    return response.data['128'];
+  } catch (error) {
+    console.error('Error getting streaming URL:', error);
+    throw error;
+  }
+}
 
 export const getTrackInfo = async (trackId: string) => {
   try {
-    const response = await axiosInstance.get(`/spotify/tracks/${trackId}`);
+    const response = await axiosInstance.get(`/zingMp3/song/info/${trackId}`);
     return response.data;
   } catch (error) {
     console.error('Error getting track info:', error);
@@ -164,26 +135,103 @@ export const getTrackInfo = async (trackId: string) => {
   }
 };
 
-export const getAlbumInfo = async (albumId: string, page: number = 0, size: number = 20) => {
+export const getTrackLyrics = async (trackId: string) => {
   try {
-    const response = await axiosInstance.get(`/spotify/albums/${albumId}`, {
-      params: { page, size }
-    });
+    const response = await axiosInstance.get(`zingMp3/song/lyrics/${trackId}`);
+    console.log('Track lyrics response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error getting album info:', error);
+    console.error('Error getting track lyrics:', error);
     throw error;
   }
+}
+export const homeApi = {
+  getTop100: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/top100');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting top 100:', error);
+      throw error;
+    }
+  },
+
+  getHubDetailChill: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/hub-detail/chill');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting hub detail chill:', error);
+      throw error;
+    }
+  },
+
+  getRecommendSongs: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/recommend');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting recommend songs:', error);
+      throw error;
+    }
+  },
+   getNewRelease: async (type) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/new-release', {
+        params: { type },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting new release:', error);
+      throw error;
+    }
+   },
+   
+   getNewReleaseTop100: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/new-release/top100');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting new release top 100:', error);
+      throw error;
+    }
+   },
 };
 
-export const getPlaylistInfo = async (playlistId: string, page: number = 0, size: number = 20) => {
-  try {
-    const response = await axiosInstance.get(`/spotify/playlists/${playlistId}`, {
-      params: { page, size }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error getting playlist info:', error);
-    throw error;
-  }
+export const artistApi = {
+  getArtistInfo: async (alias) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/artist/info', {
+        params: { alias},
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting artist info:', error);
+      throw error;
+    }
+  },
+
+  getArtistSongs: async (artistId, page = 1, count = 15) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/artist/songs', {
+        params: {artistId, page, count},
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting artist songs:', error);
+      throw error;
+    }
+  },
+
+  getArtistPlaylists: async (artistId, page = 1, count = 15) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/artist/playlists', {
+        params: { artistId, page, count },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting artist playlists:', error);
+      throw error;
+    }
+  },
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {View,Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
+import {View,Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -8,7 +8,6 @@ import DraggableFlatList, {RenderItemParams, ScaleDecorator} from 'react-native-
 import  {GestureHandlerRootView} from 'react-native-gesture-handler';
 import { getAlbumInfo, getTrackInfo } from '../../services/api';
 import { loadAndPlayTrack, playFirstTrack } from '../../services/player/trackPlayerHelper';
-import { load } from 'react-native-track-player/lib/src/trackPlayer';
 
 interface Album {
   id: string;
@@ -22,7 +21,7 @@ interface AlbumDetailScreenProps {
   navigation: any;
   route: {
     params: {
-      album: Album;
+      albumId: Album;
     };
   };
 }
@@ -31,15 +30,22 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
   const { albumId } = route.params;
   const [ album, setAlbum] = useState(null);
   const [loadingTrackId, setLoadingTrackId] = useState(null);
-
-  // const album: Album = route.params.album;
+  const [shuffledOrder, setShuffledOrder] = useState<number[]>([]);
+  const [isShuffled, setIsShuffled] = useState(false);
   const { theme } = useTheme();
-  const [orderedTracks, setOrderedTracks] = useState([]);
+  const [orderedTracks, setOrderedTracks] = useState<Track[]>([]);
 
   const backgroundColor = '#121212';
   const textColor = '#ffffff';
   const [isLoading, setIsLoading] = useState(true);
   const secondaryTextColor = '#a0a0a0';
+
+  const displayTracks = React.useMemo(() : Track[] => {
+    if (isShuffled) {
+      return shuffledOrder.map(index => orderedTracks[index]);
+    }
+    return orderedTracks;
+  }, [isShuffled, shuffledOrder, orderedTracks]);
 
   useEffect(() => {
     const fetchAlbumDetails = async () => {
@@ -56,13 +62,7 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
         setOrderedTracks(mappedTracks);
         setIsLoading(false);
 
-
         console.log('Album tracks:', mappedTracks);
-        // if (albumData.tracks && albumData.tracks.length > 0) {
-        //   await TrackPlayer.reset();
-        //   await TrackPlayer.add(albumData.tracks);
-        //   console.log('Album tracks added to queue');
-        // }
       } catch (error) {
         console.error('Error fetching album details:', error);
       }
@@ -73,10 +73,10 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: '#121212', justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: '#ffffff' }}>Loading...</Text>
-      </View>
-    )
+            <View style={styles.centeredContainer}>
+              <ActivityIndicator size="large" color="#1DB954" />
+            </View>
+          );
   }
 
   const handlePlayAlbum = async () => {
@@ -86,6 +86,8 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
   const handleTrackPress = async (track, index) => {
     await loadAndPlayTrack(track, setLoadingTrackId, navigation);
   };
+
+  
 
   const handleDragEnd = async ({ data} : {data: Track[]}) => {
     setOrderedTracks(data);
@@ -99,40 +101,29 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
   }
 
   const handleShuffle = () => {
-    const shuffled = [...orderedTracks];
+    const indices = orderedTracks.map((_, index) => index);
+    const shuffled = [...indices];
+
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     
-    setOrderedTracks(shuffled);
-    const updateQueue = async () => {
-      try {
-        await TrackPlayer.reset();
-        await TrackPlayer.add(shuffled);
-        console.log('Shuffled tracks added');
-      } catch (error) {
-        console.error('Error shuffling tracks', error);
-      }
-    };
-    updateQueue();
+    setShuffledOrder(shuffled);
+    setIsShuffled(true);
   }
 
   const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Track>) => {
     const trackIndex = getIndex(); 
     return (
       <ScaleDecorator>
-        <TouchableOpacity
-          style={[
+        <View  style={[
             styles.trackItem,
             {backgroundColor: isActive ? '#333' : backgroundColor}
-          ]}
-          onLongPress={drag}
-          onPress={() => handleTrackPress(item, trackIndex)}
-          delayLongPress={100}
-          disabled={isActive}
+          ]}>
+            <TouchableOpacity style={styles.trackInfo}
+            onPress={() => handleTrackPress(item, trackIndex)}
           >
-            <View style={styles.trackInfo}>
               <Image source={album.images[0].url} style={styles.trackImage} />
               <Text style={[styles.trackNumber, { color: secondaryTextColor }]}>
                 {trackIndex + 1}
@@ -145,11 +136,17 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
                   {item.artists.join(', ')}
                 </Text>
               </View>
-              <View style={styles.dragHandle}>
-                <Icon name="reorder-three-outline" size={24} color="#ffffff" />
-              </View>
-            </View>
         </TouchableOpacity>
+        <TouchableOpacity
+          onLongPress={drag}
+          delayLongPress={100}
+          style={styles.dragHandle}
+          >
+            <View style={styles.dragHandle}>
+              <Icon name="reorder-three-outline" size={24} color="#ffffff" />
+            </View>
+          </TouchableOpacity>
+        </View>
       </ScaleDecorator>
     )
   }
@@ -185,7 +182,7 @@ export default function AlbumDetailScreen({ route, navigation }: AlbumDetailScre
           </View>
 
           <DraggableFlatList 
-            data={orderedTracks} 
+            data={displayTracks} 
             onDragEnd={handleDragEnd} 
             style={{ flex:1}} 
             keyExtractor={(item) => item.id} 
@@ -211,6 +208,12 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     padding: 8,
+  },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 60,
   },
   trackImage: {
     width: 40,
@@ -266,6 +269,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   trackItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#222',

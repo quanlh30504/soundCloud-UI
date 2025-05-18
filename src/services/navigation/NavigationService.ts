@@ -23,9 +23,11 @@ export const NavigationService = {
   },
 
 
-  openMusicPlayer: () => {
+  openMusicPlayer: (params?: { trackId: string }) => {
     if (navigationRef.isReady()) {
-      navigationRef.navigate('MusicPlayer');
+      navigationRef.navigate('MusicPlayer', params);
+    } else {
+      console.warn('Navigation attempted before navigator was ready');
     }
   },
 };

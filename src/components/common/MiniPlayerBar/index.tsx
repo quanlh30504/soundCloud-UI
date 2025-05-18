@@ -7,7 +7,7 @@ import {
   Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useProgress, useTrackPlayerEvents, Event } from 'react-native-track-player';
+import TrackPlayer, { useProgress, useTrackPlayerEvents, Event } from 'react-native-track-player';
 import trackPlayerService from '../../../services/player/TrackPlayerService';
 import NavigationService from '../../../services/navigation/NavigationService';
 
@@ -17,6 +17,7 @@ const MiniPlayerBar = () => {
   const [visible, setVisible] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('');
   const progress = useProgress();
+  const [currentTrackId, setCurrentTrackId] = useState(null);
   
   useTrackPlayerEvents([Event.PlaybackActiveTrackChanged, Event.PlaybackState], async (event) => {
     if (event.type === Event.PlaybackActiveTrackChanged || event.type === Event.PlaybackState) {
@@ -58,6 +59,8 @@ const MiniPlayerBar = () => {
         
         const playing = await trackPlayerService.isPlaying();
         setIsPlaying(playing);
+        setCurrentTrackId(info.id);
+        
       } else {
         setVisible(false);
       }
@@ -78,6 +81,13 @@ const MiniPlayerBar = () => {
     await trackPlayerService.skipToNext();
   };
   
+  const navigateToMusicPlayer = () => {
+    if (NavigationService.openMusicPlayer) {
+      NavigationService.openMusicPlayer({ trackId: currentTrackId });
+    } else {
+      NavigationService.navigationRef.navigate('MusicPlayer', { trackId: currentTrackId });
+    }
+  }
   if (!visible || currentScreen === 'MusicPlayer') {
     return null;
   }
@@ -86,9 +96,7 @@ const MiniPlayerBar = () => {
     <TouchableOpacity 
       style={styles.container} 
       activeOpacity={0.9}
-      onPress={() => NavigationService.openMusicPlayer ? 
-        NavigationService.openMusicPlayer() : 
-        NavigationService.navigationRef.navigate('MusicPlayer')}
+      onPress={navigateToMusicPlayer}
     >
       {/* Progress bar */}
       <View style={styles.progressContainer}>
