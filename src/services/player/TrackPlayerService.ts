@@ -1,5 +1,6 @@
-import TrackPlayer, { Capability, Event, RepeatMode, State, Track } from "react-native-track-player";
+import TrackPlayer, { Capability, RatingType, RepeatMode, State, Track, AppKilledPlaybackBehavior } from "react-native-track-player";
 import { sampleTracks } from "../../data/tracks/sampleTracks";
+import { likedTracksApi } from "../../services/api";
 
 export interface TrackInfo {
   title: string;
@@ -31,10 +32,14 @@ class TrackPlayerService {
           Capability.SkipToPrevious,
           Capability.SeekTo,
         ],
+        compactCapabilities: [Capability.Play, Capability.Pause],
+        android: {
+        // This is the default behavior
+            appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification
+        },
+        ratingType: RatingType.Heart,
       });
-      
-      // await this.loadSampleTracks();
-      
+
       this.isInitialized = true;
       return true;
     } catch (error) {
@@ -121,28 +126,6 @@ class TrackPlayerService {
     }
   }
 
-  // public async playTrack(trackId: string): Promise<void> {
-  //   try {
-  //     await this.loadSampleTracks();
-      
-  //     const queue = await TrackPlayer.getQueue();
-  //     const trackIndex = queue.findIndex((track) => track.id === trackId);
-      
-  //     if (trackIndex > -1) {
-  //       await TrackPlayer.skip(trackIndex);
-  //       await TrackPlayer.play();
-  //     } else {
-  //       console.warn("Track not found:", trackId);
-  //       if (queue.length > 0) {
-  //         await TrackPlayer.skip(0);
-  //         await TrackPlayer.play();
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Error playing track:", error);
-  //   }
-  // }
-
   public async playTrack(trackId: string): Promise<void> {
     try {
       if (!trackId) {
@@ -159,17 +142,11 @@ class TrackPlayerService {
           return;
         }
       }
-      
+
       const queue = await TrackPlayer.getQueue();
-      console.log(`Current queue has ${queue.length} tracks`);
-      
-      const trackIndex = queue.findIndex((track) => 
-        track.id === trackId || 
-        (track.metadata && track.metadata.spotifyId === trackId)
-      );
-      console.log(`Track index in queue: ${trackIndex}`);
-      
-      if (trackIndex > -1) {
+      const trackIndex = await this.getTrackIndexFromID(trackId);
+
+      if (trackIndex && trackIndex > -1) {
         await TrackPlayer.skip(trackIndex);
         await TrackPlayer.play();
         console.log(`Skipped to track at index ${trackIndex} and started playback`);
@@ -219,8 +196,8 @@ class TrackPlayerService {
 
   private async getCurrentTrackIndex(): Promise<number | null> {
     try {
-      const index = await TrackPlayer.getCurrentTrack();
-      return index;
+      const index = await TrackPlayer.getActiveTrackIndex();
+      return index || null;
     } catch (error) {
       console.error("Error getting current track index:", error);
       return null;
@@ -294,6 +271,98 @@ class TrackPlayerService {
     }
   }
 
+  public async getTrackIndexFromID(trackId: string): Promise<number | null> {
+    try {
+      const queue = await TrackPlayer.getQueue();
+      const trackIndex = queue.findIndex((track) => track.id === trackId);
+      return trackIndex !== -1 ? trackIndex : null;
+    } catch (error) {
+      console.error("Error getting track index:", error);
+      return null;
+    }
+  }
+
+  public async isTrackLiked(trackId: string | null): Promise<boolean> {
+    try {
+      if (!trackId) return false;
+      
+      // First check if the track has rating set in the player
+      const trackIndex = await this.getTrackIndexFromID(trackId);
+      if (trackIndex !== null) {
+        const track = await TrackPlayer.getTrack(trackIndex);
+        if (track && track.rating && track.rating === 1) {
+          return true;
+        }
+      }
+      
+      // If no rating found in player metadata, check with API
+      const response = await likedTracksApi.isTrackInLikedTracks(trackId);
+      return response.data;
+    } catch (error) {
+      console.error("Error checking if track is liked:", error);
+      return false;
+    }
+  }
+  
+  public async likeTrack(trackId: string | null): Promise<boolean> {
+    try {
+      if (!trackId) return false;
+      await likedTracksApi.addSongToLikedTracks(trackId);
+
+      // Update track metadata
+      const trackIndex = await this.getTrackIndexFromID(trackId);
+      if (trackIndex !== null) {
+        const track = await TrackPlayer.getTrack(trackIndex);
+        await TrackPlayer.updateMetadataForTrack(trackIndex, {
+          ...track,
+          rating: 1,
+        });
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error liking track:", error);
+      return false;
+    }
+  }
+  
+  public async unlikeTrack(trackId: string | null): Promise<boolean> {
+    try {
+      if (!trackId) return false;
+      
+      // Call API to unlike the track
+      await likedTracksApi.deleteSongFromLikedTracks(trackId);
+      
+      // Update track metadata
+      const trackIndex = await this.getTrackIndexFromID(trackId);
+      if (trackIndex !== null) {
+        const track = await TrackPlayer.getTrack(trackIndex);
+        await TrackPlayer.updateMetadataForTrack(trackIndex, { ...track, rating: 0 });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error unliking track:", error);
+      return false;
+    }
+  }
+  
+  public async toggleLikeTrack(trackId: string | null): Promise<boolean> {
+    try {
+      if (!trackId) return false;
+      
+      const isLiked = await this.isTrackLiked(trackId);
+      if (isLiked) {
+        return await this.unlikeTrack(trackId);
+      } else {
+        return await this.likeTrack(trackId);
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      return false;
+    }
+  }
+
   // Clears the current queue and adds the supplied tracks to the now empty queue.
   public async setQueue(tracks: Track[]): Promise<void> {
     try {
@@ -308,6 +377,7 @@ class TrackPlayerService {
   public async loadTrack(track: Track): Promise<void> {
     try {
       TrackPlayer.load(track);
+      TrackPlayer.play();
     } catch (error) {
       console.error("Error loading track:", error);
     }

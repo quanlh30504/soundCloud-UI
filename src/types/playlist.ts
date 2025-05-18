@@ -22,6 +22,7 @@ export interface Track {
   spotifyUrl?: string;
   filePath?: string | null;
   downloadStatus?: string | null;
+  streamUrl?: string | null;
 }
 
 export interface Playlist {

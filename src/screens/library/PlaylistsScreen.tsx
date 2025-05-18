@@ -73,7 +73,10 @@ export default function PlaylistsScreen() {
     
     try {
       const response = await playlistApi.getOwnPlaylists();
-      setPlaylists(response.data.content);
+      const filteredPlaylists = response.data.content.filter(
+        (playlist: Playlist) => playlist.name !== "SYS_LIKED_TRACKS"
+      );
+      setPlaylists(filteredPlaylists);
     } catch (error) {
       console.error('Error fetching playlists:', error);
       Alert.alert('Error', 'Failed to load playlists. Please try again.');
@@ -162,7 +165,7 @@ export default function PlaylistsScreen() {
       const playlistsWithTracks = await Promise.all(
         allPlaylists.map(async (playlist: Playlist) => {
           try {
-            const tracksData = await playlistApi.getTracksFromPlaylist(playlist.id, 100, 0);
+            const tracksData = await playlistApi.getOwnPlaylistTracks(playlist.id, 0, 1000);
             return {
               id: playlist.id,
               name: playlist.name,
@@ -212,19 +215,6 @@ export default function PlaylistsScreen() {
       console.error('Error sharing JSON data:', error);
       Alert.alert('Error', 'Failed to share JSON data');
     }
-  };
-
-  // Add function to save JSON to file
-  // Note: This is a placeholder as React Native requires additional libraries 
-  // like react-native-fs to write files to the device
-  const saveJsonToFile = () => {
-    Alert.alert(
-      'Save JSON',
-      'To implement actual file saving, you would need to add a library like react-native-fs. This is a placeholder for that functionality.',
-      [
-        { text: 'OK', onPress: () => console.log('OK Pressed') },
-      ]
-    );
   };
 
   const handleImportFromJson = () => {

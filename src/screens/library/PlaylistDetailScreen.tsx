@@ -18,7 +18,6 @@ import { playlistApi } from '../../services/api';
 import { Playlist, Track } from '../../types/playlist';
 import trackPlayerService from '../../services/player/TrackPlayerService';
 import MoreOptionsMenu from '../../components/common/MoreOptionsMenu';
-import { convertPathToUrl } from '../../utils/convertUrl';
 
 export default function PlaylistDetailScreen() {
   const { theme } = useTheme();
@@ -33,6 +32,7 @@ export default function PlaylistDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [moreOptionsVisible, setMoreOptionsVisible] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
+  const [isSelectedTrackLiked, setIsSelectedTrackLiked] = useState<boolean>(false);
   const [removingTrack, setRemovingTrack] = useState<boolean>(false);
 
   useEffect(() => {
@@ -56,6 +56,25 @@ export default function PlaylistDetailScreen() {
       Alert.alert('Error', 'Failed to load playlist. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkLikeStatus = async (track: Track) => {
+    if (track?.spotifyId) {
+      const liked = await trackPlayerService.isTrackLiked(track.spotifyId);
+      console.log("Track ID:", track.spotifyId, "is liked:", liked);
+      setIsSelectedTrackLiked(liked);
+    }
+  };
+
+  const handleLikeToggle = async () => {
+    if (!selectedTrack?.spotifyId) return;
+    console.log("Toggling like status for track ID:", selectedTrack.spotifyId);
+    const isSuccess = await trackPlayerService.toggleLikeTrack(selectedTrack.spotifyId);
+    if (isSuccess) {
+      setIsSelectedTrackLiked(!isSelectedTrackLiked);
+    } else {
+      console.error("Failed to toggle like status");
     }
   };
 
@@ -85,7 +104,7 @@ export default function PlaylistDetailScreen() {
     try {
       const trackPlayerTracks = tracksToPlay.map(track => ({
         id: track.spotifyId,
-        url: String(convertPathToUrl(track.filePath as string)),
+        url: String(track?.streamUrl),
         title: track.name,
         artist: track.artists.join(', '),
         artwork: track.albumImages && track.albumImages.length > 0 
@@ -112,6 +131,7 @@ export default function PlaylistDetailScreen() {
 
   const handleTrackMoreOptionsPress = (track: Track) => {
     setSelectedTrack(track);
+    checkLikeStatus(track);
     setMoreOptionsVisible(true);
   };
 
@@ -342,9 +362,9 @@ export default function PlaylistDetailScreen() {
             : 'https://fakeimg.pl/60x60'}
           options={[
             { 
-              icon: 'heart-outline', 
-              label: 'Like', 
-              onPress: () => console.log('Like track', selectedTrack.id) 
+              icon: isSelectedTrackLiked ? 'heart' : 'heart-outline', 
+              label: isSelectedTrackLiked ? 'Unlike' : 'Like', 
+              onPress: handleLikeToggle 
             },
             { 
               icon: 'share-outline', 

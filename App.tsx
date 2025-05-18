@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -17,24 +17,24 @@ const Main = ({ isAuthenticated, setAuthenticated }: { isAuthenticated: boolean 
   const { theme } = useTheme();
   
   return (
-    <>
-      {/* <StatusBar style={theme === 'dark' ? 'light' : 'dark'} /> */}
-      <StatusBar hidden={true} />
-      {/* <NavigationContainer>
-        <RootNavigator isAuthenticated={isAuthenticated} setAuthenticated={setAuthenticated} />
-      </NavigationContainer> */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme === 'dark' ? '#000' : '#fff' }}>
+      <StatusBar 
+        style={theme === 'dark' ? 'light' : 'dark'} 
+        hidden={false}
+        backgroundColor={theme === 'dark' ? '#000' : '#fff'} 
+      />
       <AppNavigator isAuthenticated={isAuthenticated} setAuthenticated={setAuthenticated} />
-    </>
+    </SafeAreaView>
   );
 };
 
 export const initFakeAuth = async () => {
   await storageService.removeAuthToken();
   await storageService.setUserData({
-    firebaseUid: 'fwocAGxdh4OQ0tddtZE4R8D7xh12',
-    email: '1234@gmail.com',
-    displayName: 'Toan',
-    avatarUrl: null
+    firebaseUid: 'uBTqZS9YpSNOeBQZkED9W7CI8Xs2',
+    email: 'quanlh3052004@gmail.com',
+    displayName: 'Quân Nguyễn Văn',
+    avatarUrl: "https://lh3.googleusercontent.com/a/ACg8ocJdJH6Ahcs1LZCwlRFw3ihOMapSDttpdH15-aV7BDh1JZop0BQ8=s96-c"
   }).then(() => {
     console.log('User data set successfully');
   })

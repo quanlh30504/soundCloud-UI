@@ -5,13 +5,10 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { searchAll, getTrackInfo } from '../../services/api';
+import { searchApi, trackApi, likedTracksApi } from '../../services/api';
 import trackPlayerService from '../../services/player/TrackPlayerService';
-import {Track} from "react-native-track-player";
-//
-import { convertPathToUrl } from '../../utils/convertUrl';
-
-
+import { Track, RatingType } from "react-native-track-player";
+import { SongData, Album } from '../../types/zing';
 const TABS = ['All', 'Tracks', 'Albums', 'Playlists'];
 
 const SearchResultsScreen = () => {
@@ -20,7 +17,7 @@ const SearchResultsScreen = () => {
   
   const [query, setQuery] = useState(params.initialQuery || '');
   const [activeTab, setActiveTab] = useState('All');
-  const [results, setResults] = useState({ tracks: [], albums: [], playlists: [] });
+  const [results, setResults] = useState({ tracks: [] as SongData[], albums: [] as Album[], playlists: [] as Album[] });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   
@@ -35,19 +32,20 @@ const SearchResultsScreen = () => {
     setError(null);
     
     try {
-      const data = await searchAll(query);
+      // const data = await searchAll(query);
+      const data = (await searchApi.searchAll(query)).data;
       console.log('Search results:', data);
       
       setResults({
-        tracks: activeTab === 'All' || activeTab === 'Tracks' ? data.tracks || [] : [],
-        albums: activeTab === 'All' || activeTab === 'Albums' ? data.albums || [] : [],
+        tracks: activeTab === 'All' || activeTab === 'Tracks' ? data.songs || [] : [],
+        albums: activeTab === 'All' || activeTab === 'Albums' ? data.playlists || [] : [],
         playlists: activeTab === 'All' || activeTab === 'Playlists' 
-          ? (data.playlists?.content || data.playlists || []) : []
+          ? data.playlists || [] : []
       });
     } catch (err) {
       setError('Failed to search. Please try again.');
       setResults({ tracks: [], albums: [], playlists: [] });
-    } finally {
+    } finally { 
       setIsLoading(false);
     }
   };
@@ -60,63 +58,42 @@ const SearchResultsScreen = () => {
     return () => clearTimeout(timer);
   }, [query, activeTab]);
   
-  const handlePlayTrack = async (track) => {
+  const handlePlayTrack = async (track: SongData) => {
     console.log('Playing track:', track);
     try {
-      const trackId = track.spotifyId || track.id;
-      if (!trackId) return;
-      
-      // await trackPlayerService.setup();
-      let trackInfo = await getTrackInfo(trackId);
-      console.log('Track info:', trackInfo);
-      let streamUrl;
-
-      let attempts = 0;
-      const maxAttempts = 5; // 6 seconds / 2 seconds per attempt
-      while (!trackInfo.filePath && attempts < maxAttempts) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        trackInfo = await getTrackInfo(trackId);
-        attempts++;
-      }
-
-      if (trackInfo.filePath) {
-        streamUrl = trackInfo.filePath;
-      } else {
-        throw new Error('Bài hát chưa được load.');
-      }
+      const trackId = track.encodeId;
+      const isTrackLiked = await likedTracksApi.isTrackInLikedTracks(trackId);
+      const streamdata = (await trackApi.getTrackStreamUrl(trackId)).data;
+      trackApi.syncTrackToDb(trackId);
 
       let newTrack: Track = {
         id: trackId,
-        url: String(convertPathToUrl(streamUrl)),
-        title: trackInfo.name,
-        artist: trackInfo.artists?.join(' & ') || 'Unknown Artist',
-        artwork: track.albumImages[0].url,
-        // duration: trackInfo.durationMs / 1000,
+        url: String(streamdata?.[320] || streamdata?.[128]),
+        title: track.title,
+        artist: track.artistsNames,
+        artwork: track.thumbnailM,
+        rating: isTrackLiked ? 1 : 0,
       }
-
-      console.log('New track:', newTrack);
-      // await trackPlayerService.addTracks([newTrack]);
-      // await trackPlayerService.playTrack(trackId);
       trackPlayerService.loadTrack(newTrack);
     } catch (error) {
       console.error('Error playing track:', error);
     }
   };
   
-  const formatDuration = (ms) => {
+  const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
   
-  const renderTrackItem = (item) => (
+  const renderTrackItem = (item: SongData) => (
     <TouchableOpacity 
       style={styles.trackItem}
       onPress={() => handlePlayTrack(item)}
-      key={item.id}
+      key={item.encodeId}
     >
-      {item.albumImages?.[0]?.url ? (
-        <Image source={{ uri: item.albumImages[0].url }} style={styles.trackImage} />
+      {item.thumbnail ? (
+        <Image source={{ uri: item.thumbnail }} style={styles.trackImage} />
       ) : (
         <View style={[styles.trackImage, styles.placeholderImage]}>
           <Icon name="musical-note" size={24} color="#555" />
@@ -124,57 +101,55 @@ const SearchResultsScreen = () => {
       )}
       
       <View style={styles.trackInfo}>
-        <Text style={styles.trackTitle} numberOfLines={1}>{item.name}</Text>
+        <Text style={styles.trackTitle} numberOfLines={1}>{item.title}</Text>
         <Text style={styles.trackArtist} numberOfLines={1}>
-          {item.artists?.join(', ') || 'Unknown Artist'}
+          {item.artistsNames || 'Unknown Artist'}
         </Text>
       </View>
       
-      <Text style={styles.trackDuration}>{formatDuration(item.durationMs)}</Text>
+      <Text style={styles.trackDuration}>{formatDuration(item.duration * 1000)}</Text>
     </TouchableOpacity>
   );
   
-  const renderAlbumItem = (item) => (
+  const renderAlbumItem = (item: Album) => (
     <TouchableOpacity 
       style={styles.albumItem}
-      onPress={() => navigation.navigate('AlbumDetail', { albumId: item.id })}
-      key={item.id}
+      onPress={() => navigation.navigate('AlbumDetail', { albumId: item.encodeId })}
+      key={item.encodeId}
     >
-      {item.images?.[0]?.url ? (
-        <Image source={{ uri: item.images[0].url }} style={styles.albumImage} />
+      {item.thumbnail ? (
+        <Image source={{ uri: item.thumbnail }} style={styles.albumImage} />
       ) : (
         <View style={[styles.albumImage, styles.placeholderImage]}>
           <Icon name="disc" size={32} color="#555" />
         </View>
       )}
       
-      <Text style={styles.albumTitle} numberOfLines={1}>{item.name}</Text>
+      <Text style={styles.albumTitle} numberOfLines={1}>{item.title}</Text>
       <Text style={styles.albumArtist} numberOfLines={1}>
-        {item.artists?.join(', ') || 'Unknown Artist'}
+        {item.artistsNames || 'Unknown Artist'}
       </Text>
     </TouchableOpacity>
   );
   
-  const renderPlaylistItem = (item) => (
+  const renderPlaylistItem = (item: Album) => (
     <TouchableOpacity 
       style={styles.playlistItem}
-      onPress={() => navigation.navigate('PlaylistDetail', { playlistId: item.id })}
-      key={item.id}
+      onPress={() => navigation.navigate('PlaylistDetail', { playlistId: item.encodeId })}
+      key={item.encodeId}
     >
-      {item.images?.[0]?.url ? (
-        <Image source={{ uri: item.images[0].url }} style={styles.playlistImage} />
+      {item.thumbnail ? (
+        <Image source={{ uri: item.thumbnail }} style={styles.albumImage} />
       ) : (
-        <View style={[styles.playlistImage, styles.placeholderImage]}>
-          <Icon name="list" size={32} color="#555" />
+        <View style={[styles.albumImage, styles.placeholderImage]}>
+          <Icon name="disc" size={32} color="#555" />
         </View>
       )}
       
-      <View style={styles.playlistInfo}>
-        <Text style={styles.playlistTitle} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.playlistDesc} numberOfLines={1}>
-          {item.totalTracks} tracks • {item.owner}
-        </Text>
-      </View>
+      <Text style={styles.albumTitle} numberOfLines={1}>{item.title}</Text>
+      <Text style={styles.albumArtist} numberOfLines={1}>
+        {item.artistsNames || 'Unknown Artist'}
+      </Text>
     </TouchableOpacity>
   );
   
@@ -252,7 +227,7 @@ const SearchResultsScreen = () => {
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {(activeTab === 'All' ? results.albums.slice(0, 6) : results.albums).map((album) => (
-                  <View key={album.id} style={{ marginRight: 16 }}>
+                  <View key={album.encodeId} style={{ marginRight: 16 }}>
                     {renderAlbumItem(album)}
                   </View>
                 ))}

@@ -28,12 +28,15 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [repeatMode, setRepeatMode] = useState(0);
   const [moreOptionsVisible, setMoreOptionsVisible] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   
   const progress = useProgress();
   
   useTrackPlayerEvents([Event.PlaybackActiveTrackChanged], async (event) => {
     if (event.type === Event.PlaybackActiveTrackChanged) {
       loadTrackInfo();
+      checkLikeStatus();
     }
   });
   
@@ -43,6 +46,7 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
       await loadTrackInfo();
       const playing = await trackPlayerService.isPlaying();
       setIsPlaying(playing);
+      checkLikeStatus();
     };
     
     setup();
@@ -51,6 +55,17 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
   const loadTrackInfo = async () => {
     const info = await trackPlayerService.getCurrentTrackInfo();
     if (info) setTrackInfo(info);
+    
+    const trackId = await trackPlayerService.getCurrentTrackId();
+    setCurrentTrackId(trackId);
+  };
+  
+  const checkLikeStatus = async () => {
+    const trackId = await trackPlayerService.getCurrentTrackId();
+    if (trackId) {
+      const liked = await trackPlayerService.isTrackLiked(trackId);
+      setIsLiked(liked);
+    }
   };
   
 
@@ -99,6 +114,17 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
       artistName: currentTrack.artist,
       trackArtwork: currentTrack.artwork
     });
+  };
+
+  const handleLikeToggle = async () => {
+    if (!currentTrackId) return;
+    console.log("Toggling like status for track ID:", currentTrackId);
+    const isSuccess = await trackPlayerService.toggleLikeTrack(currentTrackId);
+    if (isSuccess) {
+      setIsLiked(!isLiked);
+    } else {
+      console.error("Failed to toggle like status");
+    }
   };
 
   const formatTime = (seconds: number): string => {
@@ -194,9 +220,9 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
         thumbnailUrl={trackInfo.artwork || 'https://fakeimg.pl/60x60'}
         options={[
           { 
-            icon: 'heart-outline', 
-            label: 'Like', 
-            onPress: () => console.log('Like track') 
+            icon: isLiked ? 'heart' : 'heart-outline', 
+            label: isLiked ? 'Unlike' : 'Like', 
+            onPress: handleLikeToggle 
           },
           { 
             icon: 'add-circle-outline', 
