@@ -66,8 +66,10 @@ export default function AddToPlaylistScreen({ route }: AddToPlaylistScreenProps)
     }
     
     try {
-      const response = await playlistApi.getOwnPlaylists();
-      setPlaylists(response.data.content);
+      const response = (await playlistApi.getOwnPlaylists()).data.content;
+      // exclude playlists with name "SYS_LIKED_TRACKS"
+      const filteredPlaylists = response.filter((playlist: Playlist) => playlist.name !== 'SYS_LIKED_TRACKS');
+      setPlaylists(filteredPlaylists);
     } catch (error) {
       console.error('Error fetching playlists:', error);
       Alert.alert('Error', 'Failed to load playlists. Please try again.');

@@ -4,7 +4,10 @@ export type RootStackParamList = {
   Home: undefined;
   Feed: undefined;
   SearchTab: undefined;
-  LibraryTab: undefined;
+  LibraryTab: {
+    screen: string;
+    params: any;
+  };
   Upgrade: undefined;
   Settings: undefined;
 
@@ -32,12 +35,7 @@ export type RootStackParamList = {
   AlbumDetail: { albumId: string };
   OwnPlaylistDetail: { playlist: Playlist };
   SearchResults: { query: string };
-};
 
-export type Album = {
-  id: string;
-  title: string;
-  artist: string;
-  coverArt: any; 
-  tracks: any[];
+  PlaylistDetail: { playlistId: string };
+  ArtistDetail: { alias: string };
 };

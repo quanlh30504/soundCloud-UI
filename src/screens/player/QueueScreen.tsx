@@ -8,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
   Modal,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -239,13 +240,12 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
     }
 
     return (
-      <View style={styles.queueListContainer}>
+      <ScrollView style={styles.queueListContainer}>
         {/* Before Active Tracks */}
         {queueData.beforeActive.map((item, index) => (
           <React.Fragment key={`before-${item.id || index}`}>
             {renderBeforeActiveTrackItem({ item })}
           </React.Fragment>
-
         ))}
         
         {/* Active Track */}
@@ -253,18 +253,21 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
         
         {/* After Active Tracks (Draggable) */}
         {queueData.afterActive.length > 0 && (
-          <DraggableFlatList
-            data={queueData.afterActive}
-            renderItem={renderAfterActiveTrackItem}
-            keyExtractor={(item, index) => `after-${item.id || index}`}
-            onDragEnd={handleDragEnd}
-            containerStyle={styles.draggableFlatListContainer}
-            autoscrollThreshold={20}
-            dragHitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          />
+          <View style={styles.afterActiveTracksContainer}>
+            <DraggableFlatList
+              data={queueData.afterActive}
+              renderItem={renderAfterActiveTrackItem}
+              keyExtractor={(item, index) => `after-${item.id || index}`}
+              onDragEnd={handleDragEnd}
+              scrollEnabled={false} // Disable scrolling in DraggableFlatList
+              dragHitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            />
+          </View>
         )}
-      </View>
-
+        
+        {/* Add some bottom padding for better scrolling */}
+        <View style={styles.bottomPadding} />
+      </ScrollView>
     );
   };
 
@@ -401,6 +404,13 @@ const styles = StyleSheet.create({
   },
   queueListContainer: {
     flex: 1,
+  },
+  afterActiveTracksContainer: {
+    // This makes the DraggableFlatList take up only the space it needs
+    height: 'auto',
+  },
+  bottomPadding: {
+    height: 20,
   },
   dragPreview: {
     width: 300,

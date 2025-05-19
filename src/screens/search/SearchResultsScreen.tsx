@@ -8,6 +8,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { searchApi } from '../../services/api';
 import trackPlayerService from '../../services/player/TrackPlayerService';
 import { SongData, Album } from '../../types/zing';
+import NavigationService from 'services/navigation/NavigationService';
 
 const TABS = ['All', 'Songs', 'Playlists', 'Artists'];
 
@@ -151,7 +152,7 @@ const SearchResultsScreen = () => {
   const renderPlaylistItem = (item: Album) => (
     <TouchableOpacity 
       style={styles.playlistItem}
-      onPress={() => navigation.navigate('PlaylistDetail', { playlistId: item.encodeId })}
+      onPress={() => NavigationService.navigateToPlaylist(item.encodeId)}
       key={item.encodeId}
     >
       {item.thumbnail ? (
@@ -174,7 +175,8 @@ const SearchResultsScreen = () => {
   const renderArtistItem = (item) => (
     <TouchableOpacity
       style={styles.artistItem}
-      onPress={() => navigation.navigate('ArtistDetail', {alias: item.alias })}
+      // onPress={() => navigation.navigate('ArtistDetail', {alias: item.alias })}
+      onPress={() => NavigationService.navigateToArtist(item.alias)}
       key={item.id}>
         {item.thumbnail ? (
           <Image source={{ uri: item.thumbnail }} style={styles.artistImage} resizeMode="cover" />  

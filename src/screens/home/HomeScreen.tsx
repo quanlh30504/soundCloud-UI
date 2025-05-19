@@ -7,6 +7,7 @@ import { homeApi, trackApi } from "../../services/api";
 import NewReleasesSection from "./NewRealease";
 import { useTheme } from "../../contexts/ThemeContext";
 import { darkTheme, lightTheme } from "../../config/theme";
+import NavigationService from "services/navigation/NavigationService";
 
 export default function HomeScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -74,7 +75,7 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const handleAlbumPress = (albumId) => {
-    navigation.navigate('AlbumDetail', { albumId });
+    NavigationService.navigateToPlaylist(albumId);
   };
 
   const getFirstFivePlaylists = () => {
@@ -175,7 +176,7 @@ export default function HomeScreen({ navigation }: any) {
                 <TouchableOpacity
                   key={item.encodeId || `item-${index}`}
                   style={styles.chillItem}
-                  onPress={() => navigation.navigate('PlaylistDetail', { playlistId: item.encodeId })}
+                  onPress={() => NavigationService.navigateToPlaylist(item.encodeId)}
                 >
                   <Image 
                     source={{ uri: item.thumbnail }} 
@@ -222,7 +223,7 @@ export default function HomeScreen({ navigation }: any) {
                   <TouchableOpacity
                     key={item.encodeId || item.id}
                     style={styles.top100Item}
-                    onPress={() => navigation.navigate('PlaylistDetail', { playlistId: item.encodeId || item.id })}
+                    onPress={() => NavigationService.navigateToPlaylist(item.encodeId || item.id)}
                   >
                     <Image 
                       source={{ uri: item.thumbnailM || item.thumbnail }} 

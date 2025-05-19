@@ -8,6 +8,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { artistApi } from '../../services/api';
 import TrackPlayer from "react-native-track-player";
 import TrackPlayerService from '../../services/player/TrackPlayerService';
+import { Album } from 'types/zing';
+import NavigationService from 'services/navigation/NavigationService';
 
 const ArtistScreen = () => {
   const navigation = useNavigation();
@@ -16,7 +18,7 @@ const ArtistScreen = () => {
   
   const [artistInfo, setArtistInfo] = useState(null);
   const [songs, setSongs] = useState([]);
-  const [playlists, setPlaylists] = useState([]);
+  const [playlists, setPlaylists] = useState<Album[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -100,7 +102,8 @@ const ArtistScreen = () => {
   const renderPlaylistItem = (item, index) => (
     <TouchableOpacity 
       style={styles.playlistItem}
-      onPress={() => navigation.navigate('Playlist', { playlistId: item.encodeId })}
+      // onPress={() => navigation.navigate('Playlist', { playlistId: item.encodeId })}
+      onPress={() => NavigationService.navigateToPlaylist(item.encodeId)}
       key={index}
     >
       <Image 

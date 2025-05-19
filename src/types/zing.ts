@@ -50,6 +50,7 @@ export interface Album {
   artistsNames: string;
   distributor: string;
   song?: {
+    total: number;
     items: SongData[];
   };
 }

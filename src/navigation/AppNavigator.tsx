@@ -9,18 +9,13 @@ import trackPlayerService from "../services/player/TrackPlayerService";
 import { navigationRef } from "../services/navigation/NavigationService";
 import { useTheme } from "../contexts/ThemeContext";
 import { darkTheme, lightTheme } from "../config/theme";
-import AlbumDetailScreen from "../screens/album/AlbumDetailScreen";
 import MiniPlayerBar from "../components/common/MiniPlayerBar";
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
-import SearchResultsScreen from '../screens/search/SearchResultsScreen';
-import PlaylistDetailScreen from '../screens/library/PlaylistDetailScreen';
-import AddToPlaylistScreen from "../screens/library/AddToPlaylistScreen";
 import { storageService } from '../services/storage';
 import { auth } from '../config/firebase';
 import { signOut } from 'firebase/auth';
-import ArtistScreen from "../screens/artists/ArtistDetailScreen";
 
 const MainStack = createNativeStackNavigator();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -85,14 +80,6 @@ export default function AppNavigator({
           <MainStack.Screen name="BottomTabs">
             {(props) => <BottomTabNavigator {...props} setAuthenticated={setAuthenticated} />}
           </MainStack.Screen>
-          {/* <MainStack.Screen name="AlbumDetail" component={AlbumDetailScreen} /> */}
-          <MainStack.Screen name="AddToPlaylist" component={AddToPlaylistScreen} />
-          {/* Move PlaylistDetail to the navigation inside BottomTabNavigator */}
-          {/* <MainStack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} /> */}
-          {/* <MainStack.Screen name="AlbumDetail" component={AlbumDetailScreen} /> */}
-          {/* <MainStack.Screen name="Playlist" component={PlaylistDetailScreen} /> */}
-          <MainStack.Screen name="ArtistDetail" component={ArtistScreen} />
-          {/* <MainStack.Screen name="SearchResults" component={SearchResultsScreen} />  */}
         </MainStack.Navigator>
         
         <MiniPlayerBar />

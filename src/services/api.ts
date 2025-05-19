@@ -215,7 +215,7 @@ export const searchApi = {
 export const zingPlaylistApi = {
   //Get playlist info
   getPlaylistInfo: (playlistId: string) => 
-    axiosInstance.get(`/zingMp3/playlist/info`, { params: { id: playlistId } }),
+    axiosInstance.get<Album>(`/zingMp3/playlist/info`, { params: { id: playlistId } }),
 };
 
 // // user-mics API

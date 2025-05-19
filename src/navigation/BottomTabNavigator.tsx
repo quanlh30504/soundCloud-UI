@@ -23,7 +23,10 @@ import StationsScreen from "../screens/library/StationsScreen";
 import YourUploadsScreen from "../screens/library/YourUploadsScreen";
 import ProfileScreen from "../screens/profile/ProfileScreen";
 import SearchResultsScreen from "../screens/search/SearchResultsScreen";
-import PlaylistDetailScreen from "../screens/library/PlaylistDetailScreen";
+import OwnPlaylistDetailScreen from "../screens/library/PlaylistDetailScreen";
+import PlaylistDetailScreen from "../screens/playlist/PlaylistDetailScreen";
+import AddToPlaylistScreen from "screens/library/AddToPlaylistScreen";
+import ArtistScreen from "screens/artists/ArtistDetailScreen";
 
 const Tab = createBottomTabNavigator<RootStackParamList>();
 const LibraryStack = createNativeStackNavigator<RootStackParamList>();
@@ -47,7 +50,10 @@ const LibraryStackScreen = ({
       <LibraryStack.Screen name="Stations" component={StationsScreen} />
       <LibraryStack.Screen name="YourUploads" component={YourUploadsScreen} />
       <LibraryStack.Screen name="Profile" component={ProfileScreen} />
-      <LibraryStack.Screen name="OwnPlaylistDetail" component={PlaylistDetailScreen} />
+      <LibraryStack.Screen name="OwnPlaylistDetail" component={OwnPlaylistDetailScreen} />
+      <LibraryStack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} />
+      <LibraryStack.Screen name="ArtistDetail" component={ArtistScreen} />
+      <LibraryStack.Screen name="AddToPlaylist" component={AddToPlaylistScreen} />
     </LibraryStack.Navigator>
   );
 };
@@ -135,7 +141,7 @@ export default function BottomTabNavigator({
           <LibraryStackScreen {...props} setAuthenticated={setAuthenticated} />
         )}
       </Tab.Screen>
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Upgrade"
         component={UpgradeScreen}
         options={{
@@ -147,7 +153,7 @@ export default function BottomTabNavigator({
             />
           ),
         }}
-      />
+      /> */}
       <Tab.Screen
         name="Settings"
         options={{

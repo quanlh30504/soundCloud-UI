@@ -1,5 +1,5 @@
 import TrackPlayer, { Event, Track } from 'react-native-track-player';
-import { userHistoryApi, likedTracksApi } from 'services/api';
+import { userHistoryApi, likedTracksApi, trackApi } from 'services/api';
 
 module.exports = async function() {
 
@@ -23,7 +23,7 @@ module.exports = async function() {
           rating: isLiked ? 1 : 0,
         });
       }
-      
+      await trackApi.syncTrackToDb(data.track.id);
       await userHistoryApi.addSongToListenHistory(data.track.id);
     }
   }); 

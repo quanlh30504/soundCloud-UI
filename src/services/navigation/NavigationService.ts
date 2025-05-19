@@ -9,6 +9,7 @@ export const NavigationService = {
     name: T,
     params?: RootStackParamList[T]
   ) => {
+    console.log('Navigating to:', name, params);
     if (navigationRef.isReady()) {
       navigationRef.navigate(name, params);
     } else {
@@ -30,6 +31,28 @@ export const NavigationService = {
       console.warn('Navigation attempted before navigator was ready');
     }
   },
+
+  navigateToPlaylist: (playlistId: string) => {
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('LibraryTab', {
+        screen: 'PlaylistDetail',
+        params: { playlistId }
+      });
+    } else {
+      console.warn('Navigation attempted before navigator was ready');
+    }
+  },
+
+  navigateToArtist: (alias: string) => {
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('LibraryTab', {
+        screen: 'ArtistDetail',
+        params: { alias }
+      });
+    } else {
+      console.warn('Navigation attempted before navigator was ready');
+    }
+  }
 };
 
 export default NavigationService;
