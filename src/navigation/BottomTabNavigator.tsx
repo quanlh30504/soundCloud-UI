@@ -28,6 +28,7 @@ import OwnPlaylistDetailScreen from "../screens/library/PlaylistDetailScreen";
 import PlaylistDetailScreen from "../screens/playlist/PlaylistDetailScreen";
 import AddToPlaylistScreen from "screens/library/AddToPlaylistScreen";
 import ArtistScreen from "screens/artists/ArtistDetailScreen";
+import FullHistoryScreen from "../screens/library/FullHistoryScreen";
 
 const Tab = createBottomTabNavigator<RootStackParamList>();
 const LibraryStack = createNativeStackNavigator<RootStackParamList>();
@@ -55,6 +56,7 @@ const LibraryStackScreen = ({
       <LibraryStack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} />
       <LibraryStack.Screen name="ArtistDetail" component={ArtistScreen} />
       <LibraryStack.Screen name="AddToPlaylist" component={AddToPlaylistScreen} />
+      <LibraryStack.Screen name="FullHistory" component={FullHistoryScreen} />
     </LibraryStack.Navigator>
   );
 };

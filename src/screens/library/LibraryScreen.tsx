@@ -1,12 +1,16 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import { darkTheme, lightTheme } from '../../config/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
+import { userHistoryApi, trackApi } from '../../services/api';
+import { ListeningHistoryDTO } from '../../types/history';
+import trackPlayerService from '../../services/player/TrackPlayerService';
+import { HistoryItem } from '../../components/history/HistoryItem';
 
 // Create a typed navigation prop
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -47,10 +51,96 @@ const LibrarySection = ({ title, description }: { title: string; description: st
   );
 };
 
+const HISTORY_PREVIEW_SIZE = 10;
+const HISTORY_FULL_SIZE = 100;
+
 export default function LibraryScreen() {
   const { theme } = useTheme();
   const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
   const navigation = useNavigation<NavigationProp>();
+  
+  const [history, setHistory] = useState<ListeningHistoryDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFullHistory, setIsFullHistory] = useState(false);
+
+  const loadHistory = async (pageNum: number = 0, shouldRefresh: boolean = false) => {
+    try {
+      const size = isFullHistory ? HISTORY_FULL_SIZE : HISTORY_PREVIEW_SIZE;
+      const response = (await userHistoryApi.getListenHistory(pageNum, size)).data;
+      console.log(response);
+      if (shouldRefresh) {
+        setHistory(response.content);
+      } else {
+        setHistory(prev => [...prev, ...response.content]);
+      }
+      setHasMore(!response.last);
+      setPage(pageNum);
+    } catch (error) {
+      console.error('Error loading history:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadData = async () => {
+        setLoading(true);
+        await loadHistory(0, true);
+      };
+      
+      loadData();
+    }, [])
+  );
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadHistory(0, true);
+  };
+
+  const handleLoadMore = () => {
+    if (!loading && hasMore) {
+      loadHistory(page + 1);
+    }
+  };
+
+  const handleHistoryItemPress = async (item: ListeningHistoryDTO) => {
+    try {
+      const trackId = item.track.spotifyId;
+      if (!trackId) return;
+
+      const track = (await trackApi.getTrackInfo(trackId)).data;
+      await trackPlayerService.playTrack(track);
+    } catch (error) {
+      console.error('Error playing track:', error);
+    }
+  };
+
+  const handleSeeAllPress = () => {
+    setIsFullHistory(true);
+    setHistory([]);
+    setPage(0);
+    setHasMore(true);
+    loadHistory(0, true);
+    navigation.navigate('FullHistory');
+  };
+
+  const handleRemoveFromHistory = (itemId: number) => {
+    setHistory(prev => prev.filter(item => item.id !== itemId));
+  };
+
+  const renderHistoryItem = (item: ListeningHistoryDTO) => (
+    <HistoryItem
+      key={item.id}
+      item={item}
+      onPress={() => handleHistoryItemPress(item)}
+      onRemove={() => handleRemoveFromHistory(item.id)}
+    />
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>
@@ -80,7 +170,25 @@ export default function LibraryScreen() {
       </View>
 
       {/* Library Content */}
-      <ScrollView style={styles.content}>
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={themeStyles.colors.primary}
+          />
+        }
+        onScroll={({ nativeEvent }) => {
+          if (!isFullHistory) return; // Only enable infinite scroll in full history view
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+          if (isCloseToBottom) {
+            handleLoadMore();
+          }
+        }}
+        scrollEventThrottle={400}
+      >
         {/* Library Items */}
         <LibraryItem 
           title="Liked tracks" 
@@ -107,17 +215,35 @@ export default function LibraryScreen() {
           onPress={() => navigation.navigate('YourUploads')} 
         />
 
-        {/* Recently Played Section */}
-        <LibrarySection 
-          title="Recently played" 
-          description="Find all your recently played content here." 
-        />
-
         {/* Listening History Section */}
-        <LibrarySection 
-          title="Listening history" 
-          description="Find all the tracks you've listened to here." 
-        />
+        <View style={styles.historySection}>
+          <View style={styles.historyHeader}>
+            <Text style={[styles.historySectionTitle, { color: themeStyles.colors.text }]}>
+              Listening history
+            </Text>
+            <TouchableOpacity onPress={handleSeeAllPress}>
+              <Text style={[styles.historySeeAll, { color: themeStyles.colors.primary }]}>
+                See all
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          {loading && !refreshing ? (
+            <ActivityIndicator 
+              size="large" 
+              color={themeStyles.colors.primary} 
+              style={styles.loader}
+            />
+          ) : (
+            history.slice(0, isFullHistory ? undefined : HISTORY_PREVIEW_SIZE).map(renderHistoryItem)
+          )}
+          
+          {!loading && history.length === 0 && (
+            <Text style={[styles.emptyText, { color: themeStyles.colors.secondary }]}>
+              No listening history yet
+            </Text>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -192,5 +318,70 @@ const styles = StyleSheet.create({
   },
   sectionDescription: {
     fontSize: 14,
+  },
+  historySection: {
+    marginTop: 24,
+    paddingHorizontal: 16,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  historySectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  historySeeAll: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingVertical: 8,
+  },
+  historyArtwork: {
+    width: 48,
+    height: 48,
+    borderRadius: 4,
+    marginRight: 12,
+  },
+  historyInfo: {
+    flex: 1,
+    marginRight: 8,
+  },
+  historyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  historyArtist: {
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  historyTime: {
+    fontSize: 12,
+  },
+  historyMore: {
+    padding: 8,
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginVertical: 20,
+    fontSize: 16,
+  },
+  historyMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  playCount: {
+    fontSize: 12,
   },
 });

@@ -5,6 +5,8 @@ import { SongData, Artist, Album,
   Genre, Composer, StreamData,
   SyncResponse, Top100, HubDetail,
   ChartHomeData, ChartItemInfo, WeekChartInfo } from '../types/zing';
+import { HistoryPage, ListeningHistoryDTO } from '../types/history';
+import { storageService } from '../services/storage';
 
 // User API
 export const userApi = {

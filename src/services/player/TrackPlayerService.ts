@@ -2,6 +2,7 @@ import TrackPlayer, { Capability, RatingType, RepeatMode, State, Track, AppKille
 import { trackApi } from "../api";
 import { likedTracksApi } from "../../services/api";
 import { SongData } from "types/zing";
+import { historyApi } from "../api";
 
 export interface TrackInfo {
   id: string;
