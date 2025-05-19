@@ -114,6 +114,42 @@ export const searchAll = async (query: string) => {
   }
 }
 
+export const searchSongs = async (query, page = 1, count = 18) => {
+  try {
+    const response = await axiosInstance.get('/zingMp3/search', {
+      params: { type: 'song', query, page, count }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error searching songs:', error);
+    throw error;
+  }
+}
+
+export const searchPlaylists = async (query, page = 1, count = 18) => {
+  try {
+    const response = await axiosInstance.get('/zingMp3/search', {
+      params: { type: 'playlist', query, page, count }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error searching playlists:', error);
+    throw error;
+  }
+}
+
+export const searchArtists = async (query, page = 1, count = 18) => {
+  try {
+    const response = await axiosInstance.get('/zingMp3/search', {
+      params: { type: 'artist', query, page, count }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error searching artists:', error);
+    throw error;
+  }
+}
+
 export const getStreamingUrl = async (zingId: string) => {
   try {
     const response = await axiosInstance.get(`/zingMp3/song/streamUrl/${zingId}`);

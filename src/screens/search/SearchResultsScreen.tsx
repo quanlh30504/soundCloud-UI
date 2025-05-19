@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { searchAll, getTrackInfo } from '../../services/api';
+import { searchAll, getTrackInfo, searchSongs, searchPlaylists, searchArtists } from '../../services/api';
 import trackPlayerService from '../../services/player/TrackPlayerService';
 import TrackPlayer, {Track} from "react-native-track-player";
 import { getStreamingUrl } from '../../services/api';
@@ -45,14 +45,7 @@ const SearchResultsScreen = () => {
       };
 
       setCachedResults(standardizedData);
-
-      setResults({
-        songs: activeTab === 'All' || activeTab === 'Songs' ? standardizedData.songs : [],
-        playlists: activeTab === 'All' || activeTab === 'Playlists' ? standardizedData.playlists : [],
-        artists: activeTab === 'All' || activeTab === 'Artists' ? standardizedData.artists : [],
-        top: activeTab === 'All' ? standardizedData.top : null,
-      });
-      
+      setResults(standardizedData);
     } catch (err) {
       console.error('Failed to search. Please try again.');
       setResults({ songs: [], playlists: [], artists: [], top: null });
@@ -61,6 +54,55 @@ const SearchResultsScreen = () => {
       setIsLoading(false);
     }
   };
+
+  const performTabSearch = async (tab) => {
+    if (!query.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      let data;
+
+      switch (tab) {
+        case 'Songs':
+          data = await searchSongs(query, 1, 18);
+          console.log('Song results:', data);
+          setResults({
+            ...results,
+            songs: data.items || [],
+          });
+          break;
+        case 'Playlists':
+          data = await searchPlaylists(query, 1, 18);
+          setResults({
+            ...results,
+            playlists: data.items || [],
+          });
+          break;
+        case 'Artists':
+          data = await searchArtists(query, 1, 18);
+          setResults({
+            ...results,
+            artists: data.items || [],
+          });
+          break;
+        
+        case 'All':
+          if (cachedResults) {
+            setResults(cachedResults);
+          } else {
+            await performSearch();
+          }
+          break;
+      }
+    } catch (err) {
+      console.error('Failed to search. Please try again.');
+      setResults({ songs: [], playlists: [], artists: [], top: null });
+    } finally {
+      setIsLoading(false);
+    }
+  }
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -145,14 +187,13 @@ const SearchResultsScreen = () => {
   )
 
   const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    if (cachedResults) {
-      setResults({
-        songs: tab === 'All' || tab === 'Songs' ? cachedResults.songs : [],
-        playlists: tab === 'All' || tab === 'Playlists' ? cachedResults.playlists : [],
-        artists: tab === 'All' || tab === 'Artists' ? cachedResults.artists : [],
-        top: tab === 'All' ? cachedResults.top : null,
-      });
+    if (tab !== activeTab) {
+      setActiveTab(tab);
+      if (tab !== 'All') {
+        performTabSearch(tab);
+      } else if (cachedResults) {
+        setResults(cachedResults);
+      }
     }
   };
   
