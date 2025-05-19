@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Animated, ActivityIndicator } from "react-native";
 import { useProgress } from "react-native-track-player";
 import { trackApi } from "../../services/api";
+import { FlatList } from 'react-native';
 
 interface LyricLine {
   text: string;
@@ -26,11 +27,13 @@ const LyricsComponent: React.FC<LyricsComponentProps> = ({
 }) => {
   const [currentLyricIndex, setCurrentLyricIndex] = useState(-1);
   const [lyricsLines, setLyricsLines] = useState<LyricLine[]>([]);
-  const scrollViewRef = useRef<ScrollView>(null);
-  const progress = useProgress();
+  // const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<FlatList<any>>(null);
+  const progress = useProgress(100);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("Fetching lyrics for trackId:", trackId);
     const fetchLyrics = async () => {
       if (!trackId) {
         setLyricsLines([]);
@@ -101,15 +104,13 @@ const LyricsComponent: React.FC<LyricsComponentProps> = ({
       scrollToLyric(index);
     }
   }, [progress.position, progress.duration]);
-  
+
   const scrollToLyric = (index: number) => {
-    if (index >= 0 && scrollViewRef.current) {
-      const windowHeight = Dimensions.get('window').height;
-      const centerPosition = index * 60 - (windowHeight / 2) + 200;
-      
-      scrollViewRef.current.scrollTo({
-        y: Math.max(0, centerPosition),
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToIndex({
+        index,
         animated: true,
+        viewPosition: 0.5, // scroll đến giữa màn hình
       });
     }
   };
@@ -129,35 +130,33 @@ const LyricsComponent: React.FC<LyricsComponentProps> = ({
   };
   
   return (
-    <ScrollView 
+    <FlatList
       ref={scrollViewRef}
-      style={styles.lyricsScrollView}
-      contentContainerStyle={styles.lyricsContent}
-      showsVerticalScrollIndicator={false}
-    >
-      {lyricsLines.map((line, index) => (
-        <TouchableOpacity 
-          key={index}
-          style={styles.lyricLine}
+      data={lyricsLines}
+      keyExtractor={(_, index) => index.toString()}
+      renderItem={({ item, index }) => (
+        <TouchableOpacity
           onPress={() => handleLyricPress(index)}
           activeOpacity={0.7}
+          style={styles.lyricLine}
         >
-          <Text 
+          <Text
             style={[
-              styles.lyricText, 
-              { 
+              styles.lyricText,
+              {
                 color: currentLyricIndex === index ? themeStyles.primary : themeStyles.text,
-                fontWeight: currentLyricIndex === index ? "bold" : "normal",
+                fontWeight: currentLyricIndex === index ? 'bold' : 'normal',
                 fontSize: currentLyricIndex === index ? 24 : 18,
-              }
+              },
             ]}
           >
-            {line.text}
+            {item.text}
           </Text>
         </TouchableOpacity>
-      ))}
-      <View style={{ height: 100 }} />
-    </ScrollView>
+      )}
+      contentContainerStyle={styles.lyricsContent}
+      showsVerticalScrollIndicator={false}
+    />
   );
 };
 

@@ -5,9 +5,9 @@ import TrackPlayer, { useProgress, useTrackPlayerEvents, Event } from "react-nat
 import Icon from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../../contexts/ThemeContext";
 import trackPlayerService, { TrackInfo } from "../../services/player/TrackPlayerService";
-import LyricsComponent from "./LyricsComponent";
 import MoreOptionsMenu from "../../components/common/MoreOptionsMenu";
 import QueueScreen from './QueueScreen';
+import LyricsScreen from './LyricsScreen';
 
 const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}) => {
   const { theme } = useTheme();
@@ -17,18 +17,18 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
     text: "#FFFFFF",
     secondary: "#AAAAAA",
   };
-
-  const trackId = route?.params?.trackId;
-  console.log("Track ID:", trackId);
+  
   const [trackInfo, setTrackInfo] = useState<TrackInfo>({id: "", title: "", artist: "", artwork: null });
   const [isPlaying, setIsPlaying] = useState(false);
   const [repeatMode, setRepeatMode] = useState(0);
   const [showLyrics, setShowLyrics] = useState(true);
-  const [currentTrackId, setCurrentTrackId] = useState<string | null>(trackId || null);
+  // const [currentTrackId, setCurrentTrackId] = useState<string | null>(trackId || null);
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
 
   const [moreOptionsVisible, setMoreOptionsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [queueScreenVisible, setQueueScreenVisible] = useState(false);
+  const [lyricsScreenVisible, setLyricsScreenVisible] = useState(false);
   
   const progress = useProgress();
   
@@ -61,6 +61,7 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
     if (info) setTrackInfo(info);
     
     const trackId = await trackPlayerService.getCurrentTrackId();
+    console.log("Current track ID:", trackId);
     setCurrentTrackId(trackId);
   };
   
@@ -137,6 +138,14 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
   
   const handleCloseQueue = () => {
     setQueueScreenVisible(false);
+  };
+
+  const handleOpenLyrics = () => {
+    setLyricsScreenVisible(true);
+  };
+  
+  const handleCloseLyrics = () => {
+    setLyricsScreenVisible(false);
   };
 
   const formatTime = (seconds: number): string => {
@@ -223,23 +232,8 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
         </TouchableOpacity>
       </View>
 
-      {showLyrics ? (
-        // Lyrics View
-        <View style={styles.lyricsContainer}>
-          <LyricsComponent 
-            trackId={currentTrackId}
-            onLyricPress={handleSeek}
-            themeStyles={themeStyles}
-          />
-        </View>
-      ) : (
-        // Track Info View
-        <View style={styles.trackInfoContainer}>
-          {trackInfo.artwork && <Image source={{uri: trackInfo.artwork}} style={styles.thumbnail} />}
-          <Text style={[styles.trackTitle, { color: themeStyles.text }]}>{trackInfo.title}</Text>
-          <Text style={[styles.artistName, { color: themeStyles.secondary }]}>{trackInfo.artist}</Text>
-        </View>
-      )}
+      {/* Fill space - removed the embedded LyricsComponent */}
+      <View style={{ flex: 1 }} />
       
       {/* Additional Controls Bar */}
       <View style={styles.additionalControlsBar}>
@@ -253,7 +247,7 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
         
         <View style={styles.additionalButtonSpacer} />
         
-        <TouchableOpacity style={styles.additionalButton}>
+        <TouchableOpacity style={styles.additionalButton} onPress={handleOpenLyrics}>
           <Icon name="musical-notes" size={24} color={themeStyles.secondary} />
         </TouchableOpacity>
         
@@ -302,6 +296,15 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
       <QueueScreen 
         visible={queueScreenVisible}
         onClose={handleCloseQueue}
+      />
+      
+      {/* Lyrics Screen */}
+      <LyricsScreen
+        visible={lyricsScreenVisible}
+        onClose={handleCloseLyrics}
+        trackId={currentTrackId}
+        onLyricPress={handleSeek}
+        themeStyles={themeStyles}
       />
     </SafeAreaView>
   );

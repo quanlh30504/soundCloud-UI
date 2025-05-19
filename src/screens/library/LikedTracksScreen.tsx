@@ -309,11 +309,6 @@ export default function LikedTracksScreen() {
             : 'https://fakeimg.pl/60x60'}
           options={[
             { 
-              icon: 'heart-outline', 
-              label: 'Like', 
-              onPress: () => console.log('Like track', selectedTrack.id) 
-            },
-            { 
               icon: 'share-outline', 
               label: 'Share', 
               onPress: () => console.log('Share track', selectedTrack.id) 

@@ -9,6 +9,7 @@ import { TouchableOpacity, Text, Alert } from "react-native";
 import { auth } from "../config/firebase";
 import { signOut } from "firebase/auth";
 import { storageService } from "../services/storage";
+import { CommonActions } from "@react-navigation/native";
 
 import HomeScreen from "../screens/home/HomeScreen";
 import FeedScreen from "../screens/feed/FeedScreen";
@@ -136,6 +137,37 @@ export default function BottomTabNavigator({
             <Ionicons name="library-outline" size={size} color={color} />
           ),
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            // Prevent default behavior
+            e.preventDefault();
+            
+            // Check if we're already on the Library stack
+            if (navigation.getState().routes.find((r) => r.name === 'LibraryTab')) {
+              // Get current route from the LibraryTab stack
+              const libraryState = navigation.getState().routes.find((r) => r.name === 'LibraryTab')?.state;
+              
+              // If we're not at the root Library screen (or the tab is not focused)
+              if (!libraryState || libraryState.index !== 0) {
+                // Reset to the root Library screen
+                navigation.dispatch({
+                  ...CommonActions.navigate({
+                    name: 'LibraryTab',
+                    params: { 
+                      screen: 'Library'
+                    }
+                  })
+                });
+              } else {
+                // If already at the root Library screen, just focus the tab
+                navigation.navigate('LibraryTab');
+              }
+            } else {
+              // Not on the Library tab, navigate normally
+              navigation.navigate('LibraryTab');
+            }
+          },
+        })}
       >
         {(props) => (
           <LibraryStackScreen {...props} setAuthenticated={setAuthenticated} />
