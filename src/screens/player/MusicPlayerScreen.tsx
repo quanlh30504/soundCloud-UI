@@ -14,6 +14,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../../contexts/ThemeContext";
 import trackPlayerService, { TrackInfo } from "../../services/player/TrackPlayerService";
 import MoreOptionsMenu from "../../components/common/MoreOptionsMenu";
+import QueueScreen from './QueueScreen';
 
 const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
   const { theme } = useTheme();
@@ -30,6 +31,7 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
   const [moreOptionsVisible, setMoreOptionsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
+  const [queueScreenVisible, setQueueScreenVisible] = useState(false);
   
   const progress = useProgress();
   
@@ -127,6 +129,14 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
     }
   };
 
+  const handleOpenQueue = () => {
+    setQueueScreenVisible(true);
+  };
+  
+  const handleCloseQueue = () => {
+    setQueueScreenVisible(false);
+  };
+
   const formatTime = (seconds: number): string => {
     if (!seconds) return "0:00";
     const mins = Math.floor(seconds / 60);
@@ -210,6 +220,27 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
           <Icon name="shuffle" size={24} color={themeStyles.secondary} />
         </TouchableOpacity>
       </View>
+      
+      {/* Additional Controls Bar */}
+      <View style={styles.additionalControlsBar}>
+        <TouchableOpacity style={styles.additionalButton}>
+          <Icon name="heart-outline" size={24} color={themeStyles.secondary} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.additionalButton}>
+          <Icon name="share-outline" size={24} color={themeStyles.secondary} />
+        </TouchableOpacity>
+        
+        <View style={styles.additionalButtonSpacer} />
+        
+        <TouchableOpacity style={styles.additionalButton}>
+          <Icon name="musical-notes" size={24} color={themeStyles.secondary} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.additionalButton} onPress={handleOpenQueue}>
+          <Icon name="list-outline" size={24} color={themeStyles.secondary} />
+        </TouchableOpacity>
+      </View>
 
       {/* More Options Menu */}
       <MoreOptionsMenu
@@ -246,13 +277,20 @@ const MusicPlayerScreen = ({ navigation }: { navigation: any }) => {
           }
         ]}
       />
+      
+      {/* Queue Screen */}
+      <QueueScreen 
+        visible={queueScreenVisible}
+        onClose={handleCloseQueue}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { 
-    flex: 1 
+    flex: 1,
+    position: 'relative',  // Added to support absolute positioning of the control bar
   },
   header: { 
     flexDirection: "row", 
@@ -323,6 +361,26 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF", 
     justifyContent: "center", 
     alignItems: "center" 
+  },
+  additionalControlsBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderTopWidth: 0.5,
+    borderTopColor: '#333333',
+    position: 'absolute', // Changed to absolute positioning
+    bottom: 0,           // Position at the bottom
+    left: 0,
+    right: 0,
+    backgroundColor: '#121212', // Match background so it doesn't look out of place
+  },
+  additionalButton: {
+    padding: 10,
+  },
+  additionalButtonSpacer: {
+    flex: 1,
   },
 });
 

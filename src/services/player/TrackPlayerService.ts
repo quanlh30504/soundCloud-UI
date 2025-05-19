@@ -68,11 +68,21 @@ class TrackPlayerService {
     }
   }
 
+  public async getPlayBackState(): Promise<State> {
+    try {
+      const state = await TrackPlayer.getPlaybackState();
+      return state.state;
+    } catch (error) {
+      console.error("Error getting playback state:", error);
+      return State.None;
+    }
+  }
+
   public async togglePlayback(): Promise<boolean> {
     try {
-      await this.loadSampleTracks();
+      // await this.loadSampleTracks();
       
-      const state = await TrackPlayer.getState();
+      const state = await this.getPlayBackState();
       if (state === State.Playing) {
         await TrackPlayer.pause();
         return false;
@@ -194,13 +204,13 @@ class TrackPlayerService {
     }
   }
 
-  private async getCurrentTrackIndex(): Promise<number | null> {
+  private async getCurrentTrackIndex(): Promise<number | undefined> {
     try {
       const index = await TrackPlayer.getActiveTrackIndex();
-      return index || null;
+      return index;
     } catch (error) {
       console.error("Error getting current track index:", error);
-      return null;
+      return undefined;
     }
   }
 
@@ -209,8 +219,8 @@ class TrackPlayerService {
       await this.loadSampleTracks();
       
       const trackIndex = await this.getCurrentTrackIndex();
-      
-      if (trackIndex !== null) {
+
+      if (trackIndex !== undefined) {
         const track = await TrackPlayer.getTrack(trackIndex);
         
         if (track) {
@@ -363,6 +373,76 @@ class TrackPlayerService {
     }
   }
 
+  public async moveTrackInQueue(fromIndex: number, toIndex: number): Promise<boolean> {
+    try {
+      // Get the current active track index to ensure we don't disrupt playback
+      const currentIndex = await this.getCurrentTrackIndex();
+      if (currentIndex === null) return false;
+
+      console.log(`Moving track from index ${fromIndex} to index ${toIndex}`);
+      console.log(`Current active track index: ${currentIndex}`);
+
+      // Only allow moving tracks that are after the current track
+      if (fromIndex <= currentIndex) {
+        console.warn("Cannot move tracks before or at the current track position");
+        return false;
+      }
+
+      // Get the current queue
+      const queue = await TrackPlayer.getQueue();
+      if (fromIndex >= queue.length || toIndex >= queue.length) {
+        console.error("Invalid index for queue movement");
+        return false;
+      }
+
+      // Make sure we're not moving a track to before the current track
+      if (toIndex <= currentIndex) {
+        console.warn("Cannot move track to before or at the current track position");
+        return false;
+      }
+
+      // Remove the track from its current position
+      const trackToMove = queue[fromIndex];
+      console.log('Track to move:', trackToMove.title);
+      
+      // Use TrackPlayer's methods to reorder the queue
+      await TrackPlayer.remove(fromIndex);
+      await TrackPlayer.add(trackToMove, toIndex > fromIndex ? toIndex - 1 : toIndex);
+      
+      console.log('Queue movement successful');
+      return true;
+    } catch (error) {
+      console.error("Error moving track in queue:", error);
+      return false;
+    }
+  }
+
+  public async getQueueWithStatus(): Promise<{ 
+    beforeActive: Track[], 
+    active: Track | null, 
+    afterActive: Track[] 
+  }> {
+    try {
+      const queue = await TrackPlayer.getQueue();
+      const currentIndex = await this.getCurrentTrackIndex();
+      // const currentIndex = await TrackPlayer.getActiveTrackIndex();
+      console.log(`Current track index: ${currentIndex}`);
+
+      if (currentIndex === undefined) {
+        return { beforeActive: [], active: null, afterActive: queue };
+      }
+
+      return {
+        beforeActive: queue.slice(0, currentIndex),
+        active: queue[currentIndex] || null,
+        afterActive: queue.slice(currentIndex + 1),
+      };
+    } catch (error) {
+      console.error("Error getting queue with status:", error);
+      return { beforeActive: [], active: null, afterActive: [] };
+    }
+  }
+
   // Clears the current queue and adds the supplied tracks to the now empty queue.
   public async setQueue(tracks: Track[]): Promise<void> {
     try {
@@ -382,6 +462,54 @@ class TrackPlayerService {
       console.error("Error loading track:", error);
     }
   }
+
+  public async setRepeatMode(mode: RepeatMode): Promise<void> {
+    try {
+      await TrackPlayer.setRepeatMode(mode);
+    } catch (error) {
+      console.error("Error setting repeat mode:", error);
+    }
+  }
+
+  public async getRepeatMode(): Promise<RepeatMode> {
+    try {
+      return await TrackPlayer.getRepeatMode();
+    } catch (error) {
+      console.error("Error getting repeat mode:", error);
+      return RepeatMode.Off;
+    }
+  }
+
+  // đảo các bài sau bài đang phát trong queue, giữ nguyên thứ tự các bài trước bài đang phát
+  public async shuffleNextInQueue(): Promise<void> {
+    try {
+      const queue = await TrackPlayer.getQueue();
+      const currentIndex = await this.getCurrentTrackIndex();
+
+      if (currentIndex === undefined || currentIndex >= queue.length - 1) {
+        console.warn("No tracks to shuffle after the current track");
+        return;
+      }
+
+      const nextTracks = queue.slice(currentIndex + 1);
+      const shuffledTracks = nextTracks.sort(() => Math.random() - 0.5);
+
+      // Remove the original next tracks from the queue
+      const nextTracksIndexRaw = await Promise.all(
+        nextTracks.map(track => this.getTrackIndexFromID(track.id))
+      );
+      const nextTracksIndex = nextTracksIndexRaw.filter(
+        (index): index is number => index !== null
+      );
+      await TrackPlayer.remove(nextTracksIndex);
+      
+      // Add the shuffled tracks back to the queue
+      await TrackPlayer.add(shuffledTracks);
+    } catch (error) {
+      console.error("Error shuffling next tracks in queue:", error);
+    }
+  }
+
 }
 
 export default TrackPlayerService.getInstance();
