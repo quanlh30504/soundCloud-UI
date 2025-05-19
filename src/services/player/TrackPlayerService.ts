@@ -1,5 +1,6 @@
 import TrackPlayer, { Capability, Event, RepeatMode, State, Track } from "react-native-track-player";
 import { sampleTracks } from "../../data/tracks/sampleTracks";
+import { historyApi } from "../api";
 
 export interface TrackInfo {
   title: string;
@@ -149,9 +150,9 @@ class TrackPlayerService {
         console.error('Cannot play track: trackId is undefined or null');
         return;
       }
-      
+  
       console.log(`Attempting to play track with ID: ${trackId}`);
-      
+  
       if (!this.isInitialized) {
         const setupSuccess = await this.setup();
         if (!setupSuccess) {
@@ -159,41 +160,48 @@ class TrackPlayerService {
           return;
         }
       }
-      
+
+      console.log("Track id: " + trackId)
+  
       const queue = await TrackPlayer.getQueue();
-      console.log(`Current queue has ${queue.length} tracks`);
-      
-      const trackIndex = queue.findIndex((track) => 
-        track.id === trackId || 
-        (track.metadata && track.metadata.spotifyId === trackId)
+      const trackIndex = queue.findIndex(
+        (track) => track.id === trackId || (track.metadata && track.metadata.spotifyId === trackId)
       );
-      console.log(`Track index in queue: ${trackIndex}`);
-      
+  
       if (trackIndex > -1) {
         await TrackPlayer.skip(trackIndex);
         await TrackPlayer.play();
-        console.log(`Skipped to track at index ${trackIndex} and started playback`);
       } else {
         console.warn(`Track with ID ${trackId} not found in queue`);
-        
-        if (queue.length === 0) {
-          console.warn('Queue is empty, no fallback track to play');
-        } else {
+        if (queue.length > 0) {
           await TrackPlayer.skip(0);
           await TrackPlayer.play();
-          console.log('Playing first track in queue as fallback');
         }
       }
-      
-      const playerState = await TrackPlayer.getState();
-      console.log(`Player state after playTrack: ${playerState}`);
-      
+  
+      // 🕒 Sau 10 giây, kiểm tra nếu track vẫn đang phát => thêm vào lịch sử
+      setTimeout(async () => {
+        const currentTrackIndex = await this.getCurrentTrackIndex();
+        const currentTrack = await TrackPlayer.getTrack(currentTrackIndex ?? -1);
+  
+        const state = await TrackPlayer.getState();
+        if (
+          (currentTrack?.id === trackId || currentTrack?.metadata?.spotifyId === trackId) &&
+          state === State.Playing
+        ) {
+          try {
+            await historyApi.addToHistory(trackId);
+            console.log(`Track ${trackId} added to listening history`);
+          } catch (err) {
+            console.error('Failed to add track to history:', err);
+          }
+        }
+      }, 10000); //  Thời gian đợi 10 giây (10000ms)
+  
     } catch (error) {
       console.error("Error playing track:", error);
-      
       try {
         await this.setup();
-        console.log('Re-initialized player after error');
       } catch (e) {
         console.error('Could not recover player:', e);
       }

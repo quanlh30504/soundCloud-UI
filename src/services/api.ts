@@ -1,5 +1,7 @@
 import axiosInstance from '../config/axios';
 import { User } from '../types/user';
+import { HistoryPage, ListeningHistoryDTO } from '../types/history';
+import { storageService } from '../services/storage';
 
 // User API
 export const userApi = {
@@ -185,5 +187,56 @@ export const getPlaylistInfo = async (playlistId: string, page: number = 0, size
   } catch (error) {
     console.error('Error getting playlist info:', error);
     throw error;
+  }
+};
+
+// History API
+export const historyApi = {
+  // Lấy lịch sử nghe nhạc
+  getListeningHistory: async (page: number = 0, size: number = 10): Promise<HistoryPage> => {
+    try {
+      const firebaseUid = await storageService.getUserData().then(user => user?.firebaseUid);
+      if (!firebaseUid) {
+        throw new Error('Firebase UID not found');
+      }
+
+      const response = await axiosInstance.get('/zingMp3/history', {
+        params: { page, size },
+        headers: {
+          'X-Firebase-Uid': firebaseUid
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting listening history:', error);
+      throw error;
+    }
+  },
+
+  removeFromHistory: async (trackId: number) => {
+    try {
+      await axiosInstance.delete(`/zingMp3/history/tracks/${trackId}`);
+    } catch (error) {
+      console.error('Error removing from history:', error);
+      throw error;
+    }
+  },
+  addToHistory: async (spotifyId: string): Promise<ListeningHistoryDTO> => {
+    try {
+      const firebaseUid = await storageService.getUserData().then(user => user?.firebaseUid);
+      if (!firebaseUid) {
+        throw new Error('Firebase UID not found');
+      }
+
+      const response = await axiosInstance.post(`/zingMp3/history/tracks/${spotifyId}`, null, {
+        headers: {
+          'X-Firebase-Uid': firebaseUid
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error adding to history:', error);
+      throw error;
+    }
   }
 };
