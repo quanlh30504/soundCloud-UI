@@ -41,7 +41,7 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
     const firstLoad = async () => {
       try {
         setLoading(true);
-        await loadQueue();
+        await loadQueueWithStatus();
         setIsPlayingActiveTrack(await trackPlayerService.getPlayBackState() === State.Playing);
         trackPlayerService.setRepeatMode(RepeatMode.Off);
       } catch (error) {
@@ -56,7 +56,7 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
     }
   }, [visible]);
   
-    const loadQueue = async () => {
+    const loadQueueWithStatus = async () => {
       try {
         const data = await trackPlayerService.getQueueWithStatus();
         setQueueData(data);
@@ -76,7 +76,7 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
     setLoading(true);
     try {
       await trackPlayerService.shuffleNextInQueue();
-      await loadQueue();
+      await loadQueueWithStatus();
     } catch (error) {
       console.error("Error toggling shuffle mode:", error);
     } finally {
@@ -87,8 +87,8 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
 
   const handlePlayTrack = async (trackId: string) => {
     if (!trackId) return;
-    await trackPlayerService.playTrack(trackId);
-    await loadQueue();
+    await trackPlayerService.skipToTrack(trackId);
+    await loadQueueWithStatus();
   };
 
   const togglePlayingActiveTrack = async () => {
@@ -130,7 +130,7 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
       }));
     } else {
       // If the operation failed, reload the queue to ensure UI consistency
-      loadQueue();
+      loadQueueWithStatus();
     }
   };
 

@@ -10,7 +10,7 @@ export type RootStackParamList = {
 
   Library: undefined;
   LikedTracks: undefined;
-  Playlists: undefined;
+  OwnPlaylists: undefined;
   Following: undefined;
   Stations: undefined;
   YourUploads: undefined;
@@ -30,7 +30,7 @@ export type RootStackParamList = {
   Main: undefined;
   MusicPlayer: undefined;
   AlbumDetail: { albumId: string };
-  PlaylistDetail: { playlist: Playlist };
+  OwnPlaylistDetail: { playlist: Playlist };
   SearchResults: { query: string };
 };
 

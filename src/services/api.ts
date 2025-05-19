@@ -86,7 +86,100 @@ export const authApi = {
   }
 }; 
 
-// Track API
+// =========================
+
+export const homeApi = {
+  getTop100: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/top100');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting top 100:', error);
+      throw error;
+    }
+  },
+
+  getHubDetailChill: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/hub-detail/chill');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting hub detail chill:', error);
+      throw error;
+    }
+  },
+
+  getRecommendSongs: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/recommend');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting recommend songs:', error);
+      throw error;
+    }
+  },
+   getNewRelease: async (type) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/new-release', {
+        params: { type },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting new release:', error);
+      throw error;
+    }
+   },
+   
+   getNewReleaseTop100: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/new-release/top100');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting new release top 100:', error);
+      throw error;
+    }
+   },
+};
+
+export const artistApi = {
+  getArtistInfo: async (alias) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/artist/info', {
+        params: { alias},
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting artist info:', error);
+      throw error;
+    }
+  },
+
+  getArtistSongs: async (artistId, page = 1, count = 15) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/artist/songs', {
+        params: {artistId, page, count},
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting artist songs:', error);
+      throw error;
+    }
+  },
+
+  getArtistPlaylists: async (artistId, page = 1, count = 15) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/artist/playlists', {
+        params: { artistId, page, count },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting artist playlists:', error);
+      throw error;
+    }
+  },
+};
+
+//============================
 export const trackApi = {
   //Get track stream URL
   getTrackStreamUrl: (trackId: string) => 
@@ -105,40 +198,27 @@ export const trackApi = {
     axiosInstance.post(`/zingMp3/sync/${trackId}`),
 };
 
-// Search API
+type searchType = 'song' | 'playlist' | 'artist';
+
+// // Search API
 export const searchApi = {
   //search all
   searchAll: (query: string) => 
     axiosInstance.get('/zingMp3/search/multi', { params: { query } }),
 
   //search type
-  searchType: (query: string, type: string, page: number=0, size: number=20) => 
+  searchType: (query: string, type: searchType, page: number=0, size: number=20) => 
     axiosInstance.get('/zingMp3/search', { params: { type, query, page, count: size } }),
 }
 
-// Artist API
-export const artistApi = {
-  //Get artist info
-  getArtistInfo: (artistAlias: string) => 
-    axiosInstance.get<Artist>(`/zingMp3/artist/info`, { params: { alias: artistAlias } }),
-
-  //Get artist songs
-  getArtistSongs: (artistId: string, page: number=0, size: number=20) => 
-    axiosInstance.get(`/zingMp3/artist/songs`, { params: { artistId, page, count: size } }),
-
-  //Get artist playlists
-  getArtistPlaylists: (artistId: string, page: number=0, size: number=20) => 
-    axiosInstance.get(`/zingMp3/artist/playlists`, { params: { artistId, page, count: size } }),
-};
-
-// Zing Playlist API
+// // Zing Playlist API
 export const zingPlaylistApi = {
   //Get playlist info
   getPlaylistInfo: (playlistId: string) => 
     axiosInstance.get(`/zingMp3/playlist/info`, { params: { id: playlistId } }),
 };
 
-// user-mics API
+// // user-mics API
 export const userHistoryApi = {
   //Add song to listen history
   addSongToListenHistory: (trackId: string) => 
@@ -157,7 +237,7 @@ export const userHistoryApi = {
     axiosInstance.delete(`/zingMp3/history/tracks/${trackId}`),
 };
 
-// Liked tracks API
+// // Liked tracks API
 export const likedTracksApi = {
   //Add song to liked tracks
   addSongToLikedTracks: (trackId: string) => 
@@ -178,13 +258,3 @@ export const likedTracksApi = {
 //===home===//
 
 //TODO: chart
-
-//TODO: get hub top 100 (home)
-
-//TODO: get hub chill (home)
-
-//TODO: get recommend song (lỗi ?)
-
-//TODO: get new-release
-
-//TODO: get new-release top 100

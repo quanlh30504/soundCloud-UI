@@ -42,12 +42,12 @@ const LibraryStackScreen = ({
         )}
       </LibraryStack.Screen>
       <LibraryStack.Screen name="LikedTracks" component={LikedTracksScreen} />
-      <LibraryStack.Screen name="Playlists" component={PlaylistsScreen} />
+      <LibraryStack.Screen name="OwnPlaylists" component={PlaylistsScreen} />
       <LibraryStack.Screen name="Following" component={FollowingScreen} />
       <LibraryStack.Screen name="Stations" component={StationsScreen} />
       <LibraryStack.Screen name="YourUploads" component={YourUploadsScreen} />
       <LibraryStack.Screen name="Profile" component={ProfileScreen} />
-      <LibraryStack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} />
+      <LibraryStack.Screen name="OwnPlaylistDetail" component={PlaylistDetailScreen} />
     </LibraryStack.Navigator>
   );
 };

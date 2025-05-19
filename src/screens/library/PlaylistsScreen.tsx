@@ -131,7 +131,7 @@ export default function PlaylistsScreen() {
   
   const handlePlaylistPress = (playlist: Playlist) => {
     // Navigate to playlist detail screen
-    navigation.navigate('PlaylistDetail', { playlist });
+    navigation.navigate('OwnPlaylistDetail', { playlist });
   };
 
   const handleMoreOptionsPress = (playlist: Playlist) => {
@@ -723,6 +723,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingTop: 0,
   },
   backButton: {
     padding: 8,

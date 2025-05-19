@@ -5,11 +5,11 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { searchApi, trackApi, likedTracksApi } from '../../services/api';
+import { searchApi } from '../../services/api';
 import trackPlayerService from '../../services/player/TrackPlayerService';
-import { Track, RatingType } from "react-native-track-player";
 import { SongData, Album } from '../../types/zing';
-const TABS = ['All', 'Tracks', 'Albums', 'Playlists'];
+
+const TABS = ['All', 'Songs', 'Playlists', 'Artists'];
 
 const SearchResultsScreen = () => {
   const navigation = useNavigation();
@@ -17,17 +17,18 @@ const SearchResultsScreen = () => {
   
   const [query, setQuery] = useState(params.initialQuery || '');
   const [activeTab, setActiveTab] = useState('All');
-  const [results, setResults] = useState({ tracks: [] as SongData[], albums: [] as Album[], playlists: [] as Album[] });
+  const [results, setResults] = useState({ songs: [], playlists: [], artists: [], top: null });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  
-  // Search function
+  const [cachedResults, setCachedResults] = useState(null);
+
   const performSearch = async () => {
     if (!query.trim()) {
-      setResults({ tracks: [], albums: [], playlists: [] });
+      setResults({ songs: [], playlists: [], artists: [], top: null });
+      setCachedResults(null);
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
     
@@ -36,19 +37,73 @@ const SearchResultsScreen = () => {
       const data = (await searchApi.searchAll(query)).data;
       console.log('Search results:', data);
       
-      setResults({
-        tracks: activeTab === 'All' || activeTab === 'Tracks' ? data.songs || [] : [],
-        albums: activeTab === 'All' || activeTab === 'Albums' ? data.playlists || [] : [],
-        playlists: activeTab === 'All' || activeTab === 'Playlists' 
-          ? data.playlists || [] : []
-      });
+      const standardizedData = {
+        songs: data.songs || [],
+        playlists: data.playlists || [],
+        artists: data.artists || [],
+        top: data.top || null,
+      };
+
+      setCachedResults(standardizedData);
+      setResults(standardizedData);
     } catch (err) {
-      setError('Failed to search. Please try again.');
-      setResults({ tracks: [], albums: [], playlists: [] });
-    } finally { 
+      console.error('Failed to search. Please try again.');
+      setResults({ songs: [], playlists: [], artists: [], top: null });
+      setCachedResults(null);
+    } finally {
       setIsLoading(false);
     }
   };
+
+  const performTabSearch = async (tab) => {
+    if (!query.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      let data;
+
+      switch (tab) {
+        case 'Songs':
+          // data = await searchSongs(query, 1, 18);
+          data = (await searchApi.searchType(query, 'song', 1, 18)).data;
+          setResults({
+            ...results,
+            songs: data.items || [],
+          });
+          break;
+        case 'Playlists':
+          // data = await searchPlaylists(query, 1, 18);
+          data = (await searchApi.searchType(query, 'playlist', 1, 18)).data;
+          setResults({
+            ...results,
+            playlists: data.items || [],
+          });
+          break;
+        case 'Artists':
+          data = (await searchApi.searchType(query, 'artist', 1, 18)).data;
+          setResults({
+            ...results,
+            artists: data.items || [],
+          });
+          break;
+        
+        case 'All':
+          if (cachedResults) {
+            setResults(cachedResults);
+          } else {
+            await performSearch();
+          }
+          break;
+      }
+    } catch (err) {
+      console.error('Failed to search. Please try again.');
+      setResults({ songs: [], playlists: [], artists: [], top: null });
+    } finally {
+      setIsLoading(false);
+    }
+  }
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -56,29 +111,11 @@ const SearchResultsScreen = () => {
     }, 500);
     
     return () => clearTimeout(timer);
-  }, [query, activeTab]);
+  }, [query]);
   
   const handlePlayTrack = async (track: SongData) => {
-    console.log('Playing track:', track);
-    try {
-      const trackId = track.encodeId;
-      const isTrackLiked = await likedTracksApi.isTrackInLikedTracks(trackId);
-      const streamdata = (await trackApi.getTrackStreamUrl(trackId)).data;
-      trackApi.syncTrackToDb(trackId);
-
-      let newTrack: Track = {
-        id: trackId,
-        url: String(streamdata?.[320] || streamdata?.[128]),
-        title: track.title,
-        artist: track.artistsNames,
-        artwork: track.thumbnailM,
-        rating: isTrackLiked ? 1 : 0,
-      }
-      trackPlayerService.loadTrack(newTrack);
-    } catch (error) {
-      console.error('Error playing track:', error);
-    }
-  };
+    trackPlayerService.playTrack(track);
+  }
   
   const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
@@ -86,14 +123,14 @@ const SearchResultsScreen = () => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
   
-  const renderTrackItem = (item: SongData) => (
+  const renderSongItem = (item) => (
     <TouchableOpacity 
       style={styles.trackItem}
       onPress={() => handlePlayTrack(item)}
       key={item.encodeId}
     >
       {item.thumbnail ? (
-        <Image source={{ uri: item.thumbnail }} style={styles.trackImage} />
+        <Image source={{ uri: item.thumbnail }} style={styles.trackImage} resizeMode="conver" />
       ) : (
         <View style={[styles.trackImage, styles.placeholderImage]}>
           <Icon name="musical-note" size={24} color="#555" />
@@ -111,27 +148,6 @@ const SearchResultsScreen = () => {
     </TouchableOpacity>
   );
   
-  const renderAlbumItem = (item: Album) => (
-    <TouchableOpacity 
-      style={styles.albumItem}
-      onPress={() => navigation.navigate('AlbumDetail', { albumId: item.encodeId })}
-      key={item.encodeId}
-    >
-      {item.thumbnail ? (
-        <Image source={{ uri: item.thumbnail }} style={styles.albumImage} />
-      ) : (
-        <View style={[styles.albumImage, styles.placeholderImage]}>
-          <Icon name="disc" size={32} color="#555" />
-        </View>
-      )}
-      
-      <Text style={styles.albumTitle} numberOfLines={1}>{item.title}</Text>
-      <Text style={styles.albumArtist} numberOfLines={1}>
-        {item.artistsNames || 'Unknown Artist'}
-      </Text>
-    </TouchableOpacity>
-  );
-  
   const renderPlaylistItem = (item: Album) => (
     <TouchableOpacity 
       style={styles.playlistItem}
@@ -139,23 +155,52 @@ const SearchResultsScreen = () => {
       key={item.encodeId}
     >
       {item.thumbnail ? (
-        <Image source={{ uri: item.thumbnail }} style={styles.albumImage} />
+        <Image source={{ uri: item.thumbnail }} style={styles.playlistImage} resizeMode="cover" />
       ) : (
         <View style={[styles.albumImage, styles.placeholderImage]}>
           <Icon name="disc" size={32} color="#555" />
         </View>
       )}
       
-      <Text style={styles.albumTitle} numberOfLines={1}>{item.title}</Text>
-      <Text style={styles.albumArtist} numberOfLines={1}>
-        {item.artistsNames || 'Unknown Artist'}
-      </Text>
+      <View style={styles.playlistInfo}>
+        <Text style={styles.playlistTitle} numberOfLines={1}>{item.title}</Text>
+        <Text style={styles.playlistDesc} numberOfLines={1}>
+          {item.artistsNames}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
+
+  const renderArtistItem = (item) => (
+    <TouchableOpacity
+      style={styles.artistItem}
+      onPress={() => navigation.navigate('ArtistDetail', {alias: item.alias })}
+      key={item.id}>
+        {item.thumbnail ? (
+          <Image source={{ uri: item.thumbnail }} style={styles.artistImage} resizeMode="cover" />  
+        ) : (
+          <View style={[styles.artistImage, styles.placeholderImage]}>
+            <Icon name="person" size={32} color="#555" />
+          </View>
+        )}
+        <Text style={styles.artistName} numberOfLines={1}>{item.name}</Text>
+    </TouchableOpacity>
+  )
+
+  const handleTabChange = (tab) => {
+    if (tab !== activeTab) {
+      setActiveTab(tab);
+      if (tab !== 'All') {
+        performTabSearch(tab);
+      } else if (cachedResults) {
+        setResults(cachedResults);
+      }
+    }
+  };
   
   const renderContent = () => {
-    if (isLoading && !results.tracks.length && !results.albums.length && !results.playlists.length) {
-      return (
+    if (isLoading && !results.songs.length && !results.playlists.length && !results.artists.length) {
+        return (
         <View style={styles.centeredContainer}>
           <ActivityIndicator size="large" color="#1DB954" />
         </View>
@@ -180,12 +225,12 @@ const SearchResultsScreen = () => {
       );
     }
     
-    const noResults = (
-      (activeTab === 'All' && !results.tracks.length && !results.albums.length && !results.playlists.length) ||
-      (activeTab === 'Tracks' && !results.tracks.length) ||
-      (activeTab === 'Albums' && !results.albums.length) ||
-      (activeTab === 'Playlists' && !results.playlists.length)
-    );
+  const noResults = (
+    (activeTab === 'All' && !results.top && !results.songs.length && !results.playlists.length && !results.artists.length) ||
+    (activeTab === 'Songs' && !results.songs.length) ||
+    (activeTab === 'Playlists' && !results.playlists.length) ||
+    (activeTab === 'Artists' && !results.artists.length)
+  );
     
     if (noResults && !isLoading) {
       return (
@@ -199,39 +244,30 @@ const SearchResultsScreen = () => {
     return (
       <ScrollView style={styles.scrollView}>
         <View style={styles.resultsContainer}>
-          {/* Tracks */}
-          {(activeTab === 'All' || activeTab === 'Tracks') && results.tracks.length > 0 && (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Tracks</Text>
-                {activeTab === 'All' && results.tracks.length > 3 && (
-                  <TouchableOpacity onPress={() => setActiveTab('Tracks')}>
-                    <Text style={styles.seeAllText}>See all</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-              {(activeTab === 'All' ? results.tracks.slice(0, 3) : results.tracks).map(renderTrackItem)}
+          {/* Top results */}
+          {/* {activeTab === 'All' && results.top && (
+            <View style={styles.topResult}>
+              <Text style={styles.topResultTitle}>Top Result</Text>
+              {results.top.duration ? renderSongItem(results.top) : renderPlaylistItem(results.top)}
             </View>
-          )}
-          
-          {/* Albums */}
-          {(activeTab === 'All' || activeTab === 'Albums') && results.albums.length > 0 && (
+          )} */}
+
+          {/* Song results */}
+          {(activeTab === 'All' || activeTab === 'Songs') && results.songs.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Albums</Text>
-                {activeTab === 'All' && results.albums.length > 3 && (
-                  <TouchableOpacity onPress={() => setActiveTab('Albums')}>
+                <Text style={styles.sectionTitle}>Songs</Text>
+                {activeTab === 'All' && results.songs.length > 3 && (
+                  <TouchableOpacity onPress={() => handleTabChange('Songs')}>
                     <Text style={styles.seeAllText}>See all</Text>
                   </TouchableOpacity>
                 )}
               </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {(activeTab === 'All' ? results.albums.slice(0, 6) : results.albums).map((album) => (
-                  <View key={album.encodeId} style={{ marginRight: 16 }}>
-                    {renderAlbumItem(album)}
-                  </View>
-                ))}
-              </ScrollView>
+              {(activeTab === 'All' ? results.songs.slice(0, 3) : results.songs).map(song => (
+                <React.Fragment key={song.encodeId}>
+                  {renderSongItem(song)}
+                </React.Fragment>
+              ))}
             </View>
           )}
           
@@ -241,12 +277,37 @@ const SearchResultsScreen = () => {
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Playlists</Text>
                 {activeTab === 'All' && results.playlists.length > 3 && (
-                  <TouchableOpacity onPress={() => setActiveTab('Playlists')}>
+                  <TouchableOpacity onPress={() => handleTabChange('Playlists')}>
                     <Text style={styles.seeAllText}>See all</Text>
                   </TouchableOpacity>
                 )}
               </View>
-              {(activeTab === 'All' ? results.playlists.slice(0, 3) : results.playlists).map(renderPlaylistItem)}
+              {(activeTab === 'All' ? results.playlists.slice(0, 3) : results.playlists).map((playlist) => (
+                <View key={playlist.encodeId}>
+                {renderPlaylistItem(playlist)}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Artists */}
+          {(activeTab === 'All' || activeTab === 'Artists') && results.artists.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Artists</Text>
+                {activeTab === 'All' && results.artists.length > 3 && (
+                  <TouchableOpacity onPress={() => handleTabChange('Artists')}>
+                    <Text style={styles.seeAllText}>See all</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {(activeTab === 'All' ? results.artists.slice(0, 6) : results.artists).map(artist => (
+                  <View key={artist.id} style={{ marginRight: 16 }}>
+                    {renderArtistItem(artist)}
+                  </View>
+                ))}
+              </ScrollView>
             </View>
           )}
           
@@ -292,7 +353,7 @@ const SearchResultsScreen = () => {
           <TouchableOpacity
             key={tab}
             style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}
-            onPress={() => setActiveTab(tab)}
+            onPress={() => handleTabChange(tab)}
           >
             <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
               {tab}
@@ -486,6 +547,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  topResult: {
+    marginBottom: 24,
+  },
+  topResultTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  artistItem: {
+    width: 140,
+  },
+  artistImage: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    marginBottom: 8,
+  },
+  artistName: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
 

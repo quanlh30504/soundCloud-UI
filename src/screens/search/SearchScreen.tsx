@@ -119,7 +119,7 @@ const SearchScreen: React.FC = () => {
     if (searchQuery.trim()) {
       navigation.navigate('SearchResults', { initialQuery: searchQuery });
       
-      // using AsyncStorage in future
+      // using AsyncStorage in future ^^
     }
   };
   const handleClearSearch = () => {
@@ -160,7 +160,7 @@ const SearchScreen: React.FC = () => {
               { 
                 right: -10 - i * 15, 
                 bottom: -40 - i * 20,
-                borderColor: `${genre.borderColor}${30 - i * 5}`, // Decreasing opacity
+                borderColor: `${genre.borderColor}${30 - i * 5}`,
               }
             ]} 
           />

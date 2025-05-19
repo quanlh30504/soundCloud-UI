@@ -88,7 +88,7 @@ export default function LibraryScreen() {
         />
         <LibraryItem 
           title="Playlists" 
-          onPress={() => navigation.navigate('Playlists')} 
+          onPress={() => navigation.navigate('OwnPlaylists')} 
         />
         <LibraryItem 
           title="Albums" 
@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingTop: 0,
   },
   title: {
     fontSize: 24,
