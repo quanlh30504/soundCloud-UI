@@ -1,6 +1,4 @@
 import TrackPlayer, { Capability, Event, RepeatMode, State, Track } from "react-native-track-player";
-import { sampleTracks } from "../../data/tracks/sampleTracks";
-import { getTrackInfo } from "../api";
 import { getStreamingUrl } from "../api";
 
 export interface TrackInfo {

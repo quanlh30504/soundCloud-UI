@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Animated } from "react-native";
+import {View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Animated, ActivityIndicator } from "react-native";
 import { useProgress } from "react-native-track-player";
 import { getTrack } from "react-native-track-player/lib/src/trackPlayer";
 import { getTrackLyrics } from "../../services/api";
@@ -105,8 +105,11 @@ const LyricsComponent: React.FC<LyricsComponentProps> = ({
   
   const scrollToLyric = (index: number) => {
     if (index >= 0 && scrollViewRef.current) {
+      const windowHeight = Dimensions.get('window').height;
+      const centerPosition = index * 60 - (windowHeight / 2) + 200;
+      
       scrollViewRef.current.scrollTo({
-        y: index * 60, 
+        y: Math.max(0, centerPosition),
         animated: true,
       });
     }

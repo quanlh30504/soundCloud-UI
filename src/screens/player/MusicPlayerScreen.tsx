@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text,StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image,} from "react-native";
+import { View, Text,StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image, } from "react-native";
 import Slider from "@react-native-community/slider";
 import TrackPlayer, { useProgress, useTrackPlayerEvents, Event } from "react-native-track-player";
 import Icon from "react-native-vector-icons/Ionicons";
