@@ -8,6 +8,7 @@ import trackPlayerService, { TrackInfo } from "../../services/player/TrackPlayer
 import MoreOptionsMenu from "../../components/common/MoreOptionsMenu";
 import QueueScreen from './QueueScreen';
 import LyricsScreen from './LyricsScreen';
+import {RepeatMode, State} from 'react-native-track-player';
 
 const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}) => {
   const { theme } = useTheme();
@@ -20,15 +21,13 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
   
   const [trackInfo, setTrackInfo] = useState<TrackInfo>({id: "", title: "", artist: "", artwork: null });
   const [isPlaying, setIsPlaying] = useState(false);
-  const [repeatMode, setRepeatMode] = useState(0);
-  const [showLyrics, setShowLyrics] = useState(true);
-  // const [currentTrackId, setCurrentTrackId] = useState<string | null>(trackId || null);
+  // const [repeatMode, setRepeatMode] = useState(0);
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
-
   const [moreOptionsVisible, setMoreOptionsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [queueScreenVisible, setQueueScreenVisible] = useState(false);
   const [lyricsScreenVisible, setLyricsScreenVisible] = useState(false);
+  const [isRepeating, setIsRepeating] = useState(false);
   
   const progress = useProgress();
   
@@ -37,11 +36,6 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
       loadTrackInfo();
       checkLikeStatus();
     }
-
-    // const track = await TrackPlayer.getActiveTrack();
-    // if (track) {
-    //   setCurrentTrackId(track.id);
-    // }
   });
   
   useEffect(() => {
@@ -73,6 +67,20 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
     }
   };
   
+  const toggleRepeatMode = async () => {
+    const currentMode = await trackPlayerService.getRepeatMode();
+    setIsRepeating(currentMode === RepeatMode.Off ? true : false);
+    trackPlayerService.setRepeatMode(currentMode === RepeatMode.Off ? RepeatMode.Track : RepeatMode.Off);
+    console.log("Repeat mode set to:", currentMode === RepeatMode.Off ? "Track" : "Off");
+  }
+
+  const handleShufflePress = async () => {
+    try {
+      trackPlayerService.shuffleNextInQueue();
+    } catch (error) {
+      console.error("Error shuffling next in queue:", error);
+    }
+  }
 
   const handlePlayPause = async () => {
     const playing = await trackPlayerService.togglePlayback();
@@ -91,10 +99,10 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
     await trackPlayerService.seekTo(value);
   };
   
-  const handleToggleRepeat = async () => {
-    const newMode = await trackPlayerService.toggleRepeatMode();
-    setRepeatMode(newMode);
-  };
+  // const handleToggleRepeat = async () => {
+  //   const newMode = await trackPlayerService.toggleRepeatMode();
+  //   setRepeatMode(newMode);
+  // };
   
   const handleOpenMoreOptions = () => {
     setMoreOptionsVisible(true);
@@ -206,8 +214,8 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
       
       {/* Controls */}
       <View style={styles.controlsContainer}>
-        <TouchableOpacity onPress={handleToggleRepeat} style={styles.sideControl}>
-          <Icon name="repeat" size={24} color={repeatMode !== 0 ? themeStyles.primary : themeStyles.secondary} />
+        <TouchableOpacity onPress={toggleRepeatMode} style={styles.sideControl}>
+          <Icon name="repeat" size={24} color={isRepeating ? themeStyles.primary : themeStyles.secondary} />
         </TouchableOpacity>
         
         <TouchableOpacity onPress={handlePrevious} style={styles.mainControl}>
@@ -227,7 +235,8 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
           <Icon name="play-forward" size={28} color={themeStyles.text} />
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.sideControl}>
+        <TouchableOpacity style={styles.sideControl} onPress={handleShufflePress}>
+          {/* Assuming shuffle is a boolean state */}
           <Icon name="shuffle" size={24} color={themeStyles.secondary} />
         </TouchableOpacity>
       </View>
@@ -238,11 +247,17 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
       {/* Additional Controls Bar */}
       <View style={styles.additionalControlsBar}>
         <TouchableOpacity style={styles.additionalButton}>
-          <Icon name="heart-outline" size={24} color={themeStyles.secondary} />
+          <Icon name={isLiked ? 'heart' : 'heart-outline'}
+            size={24}
+            color={isLiked ? themeStyles.primary : themeStyles.secondary}
+            onPress={handleLikeToggle}
+          />
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.additionalButton}>
-          <Icon name="share-outline" size={24} color={themeStyles.secondary} />
+          <Icon name="time-outline" size={24}
+            color={themeStyles.secondary}
+          />
         </TouchableOpacity>
         
         <View style={styles.additionalButtonSpacer} />
@@ -383,8 +398,8 @@ const styles = StyleSheet.create({
     padding: 10
   },
   playButton: { 
-    width: 70, 
-    height: 70, 
+    width: 50, 
+    height: 50, 
     borderRadius: 35, 
     backgroundColor: "#FFF", 
     justifyContent: "center", 

@@ -2,7 +2,6 @@ import TrackPlayer, { Capability, RatingType, RepeatMode, State, Track, AppKille
 import { trackApi } from "../api";
 import { likedTracksApi } from "../../services/api";
 import { SongData } from "types/zing";
-import { historyApi } from "../api";
 
 export interface TrackInfo {
   id: string;
@@ -88,28 +87,15 @@ class TrackPlayerService {
   
   public async skipToNext(): Promise<void> {
     try {
-      const currentIndex = await this.getCurrentTrackIndex();
-      const queue = await TrackPlayer.getQueue();
-      if (currentIndex !== null && currentIndex < queue.length - 1) {
-        await TrackPlayer.skip(0);
-      } else {
-        await TrackPlayer.skipToNext();
-      }
+      await TrackPlayer.skipToNext();
     } catch (error) {
-      console.error("Error skipping to previous track:", error);
+      console.error("Error skipping to next track:", error);
     }
   }
 
   public async skipToPrevious(): Promise<void> {
     try {
-      const currentIndex = await this.getCurrentTrackIndex();
-      
-      if (currentIndex !== null && currentIndex <= 0) {
-        const queue = await TrackPlayer.getQueue();
-        await TrackPlayer.skip(queue.length - 1);
-      } else {
-        await TrackPlayer.skipToPrevious();
-      }
+      await TrackPlayer.skipToPrevious();
     } catch (error) {
       console.error("Error skipping to previous track:", error);
     }
@@ -139,7 +125,7 @@ class TrackPlayerService {
         artwork: track.thumbnailM,
       });
       await TrackPlayer.play();
-      console.log('all infor:', track);
+      // console.log('all infor:', track);
     } catch (error) {
       console.error('Error playing track:', error);
     }

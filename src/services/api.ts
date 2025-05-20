@@ -223,8 +223,10 @@ export const zingPlaylistApi = {
 // // user-mics API
 export const userHistoryApi = {
   //Add song to listen history
-  addSongToListenHistory: (trackId: string) => 
-    axiosInstance.post(`/zingMp3/history/${trackId}`),
+  addSongToListenHistory: (trackId: string) => {
+    console.log('Adding song to listen history:', trackId);
+    return axiosInstance.post(`/zingMp3/history/${trackId}`);
+  },
 
   //Get listen history
   getListenHistory: (page: number=0, size: number=20) => 

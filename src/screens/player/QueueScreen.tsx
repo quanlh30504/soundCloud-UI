@@ -68,9 +68,9 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
 
   const toggleRepeatMode = async () => {
     const currentMode = await trackPlayerService.getRepeatMode();
-    console.log('Current repeat mode:', currentMode);
     setIsRepeating(currentMode === RepeatMode.Off ? true : false);
     trackPlayerService.setRepeatMode(currentMode === RepeatMode.Off ? RepeatMode.Queue : RepeatMode.Off);
+    console.log('Repeat mode toggled:', currentMode === RepeatMode.Off ? 'On' : 'Off');
   }
 
   const handleShufflePress = async () => {

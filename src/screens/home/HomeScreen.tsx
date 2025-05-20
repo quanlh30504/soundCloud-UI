@@ -54,7 +54,7 @@ export default function HomeScreen({ navigation }: any) {
       }
 
       const top100Data = await homeApi.getTop100();
-      console.log("Top 100 data received:", top100Data);
+      // console.log("Top 100 data received:", top100Data);
       if (top100Data) {
         setTop100Items(top100Data);
       }

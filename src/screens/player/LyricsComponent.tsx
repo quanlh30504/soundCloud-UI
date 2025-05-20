@@ -105,13 +105,24 @@ const LyricsComponent: React.FC<LyricsComponentProps> = ({
     }
   }, [progress.position, progress.duration]);
 
+  // const scrollToLyric = (index: number) => {
+  //   if (scrollViewRef.current) {
+  //     scrollViewRef.current.scrollToIndex({
+  //       index,
+  //       animated: true,
+  //       viewPosition: 0.5, // scroll đến giữa màn hình
+  //     });
+  //   }
+  // };
   const scrollToLyric = (index: number) => {
     if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToIndex({
-        index,
-        animated: true,
-        viewPosition: 0.5, // scroll đến giữa màn hình
-      });
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToIndex({
+          index,
+          animated: true,
+          viewPosition: 0.5,
+        });
+      }, 100); // Delay 100ms để FlatList render xong item
     }
   };
   
@@ -156,6 +167,15 @@ const LyricsComponent: React.FC<LyricsComponentProps> = ({
       )}
       contentContainerStyle={styles.lyricsContent}
       showsVerticalScrollIndicator={false}
+      onScrollToIndexFailed={({ index }) => {
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToIndex({
+            index,
+            animated: true,
+            viewPosition: 0.5,
+          });
+        }, 300);
+      }}
     />
   );
 };
