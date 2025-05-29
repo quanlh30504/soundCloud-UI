@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text,StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image, } from "react-native";
 import Slider from "@react-native-community/slider";
-import TrackPlayer, { useProgress, useTrackPlayerEvents, Event } from "react-native-track-player";
+import TrackPlayer, { useProgress, useTrackPlayerEvents, Event, Track } from "react-native-track-player";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../../contexts/ThemeContext";
 import trackPlayerService, { TrackInfo } from "../../services/player/TrackPlayerService";
@@ -9,6 +9,7 @@ import MoreOptionsMenu from "../../components/common/MoreOptionsMenu";
 import QueueScreen from './QueueScreen';
 import LyricsScreen from './LyricsScreen';
 import {RepeatMode, State} from 'react-native-track-player';
+import { Visualize } from "../../components/visualize/Visualize";
 
 const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}) => {
   const { theme } = useTheme();
@@ -28,6 +29,7 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
   const [queueScreenVisible, setQueueScreenVisible] = useState(false);
   const [lyricsScreenVisible, setLyricsScreenVisible] = useState(false);
   const [isRepeating, setIsRepeating] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   
   const progress = useProgress();
   
@@ -52,7 +54,14 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
   
   const loadTrackInfo = async () => {
     const info = await trackPlayerService.getCurrentTrackInfo();
-    if (info) setTrackInfo(info);
+    if (info) {
+      setTrackInfo(info);
+    }
+
+    const track: Track|undefined = await TrackPlayer.getActiveTrack();
+    if (track && track.url) {
+      setAudioUrl(track.url);
+    }
     
     const trackId = await trackPlayerService.getCurrentTrackId();
     console.log("Current track ID:", trackId);
@@ -189,6 +198,14 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
         <Text style={[styles.trackTitle, { color: themeStyles.text }]}>{trackInfo.title}</Text>
         <Text style={[styles.artistName, { color: themeStyles.secondary }]}>{trackInfo.artist}</Text>
       </View>
+      
+      {/* Audio Visualizer */}
+      <Visualize 
+        audioUrl={audioUrl || ''}
+        isPlaying={isPlaying}
+        position={progress.position}
+        volume={0} // Muted for visualization only
+      />
       
       {/* Progress Bar */}
       <View style={styles.progressContainer}>

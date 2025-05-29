@@ -1,4 +1,4 @@
-import TrackPlayer, { Event, Track } from 'react-native-track-player';
+import TrackPlayer, { Event, Track, State } from 'react-native-track-player';
 import { userHistoryApi, likedTracksApi, trackApi } from 'services/api';
 
 module.exports = async function() {

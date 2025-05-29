@@ -36,14 +36,14 @@ export default function HomeScreen({ navigation }: any) {
       // }
 
       const hubData = await homeApi.getHubDetailChill();
-      console.log("Hub data received:", hubData);
+      // console.log("Hub data received:", hubData);
       if (hubData) {
         setHubData(hubData);
       }
     
       // fetch new releases - songs
       const newReleaseSongsData = await homeApi.getNewRelease('song');
-      console.log("New release songs data received:", newReleaseSongsData);
+      // console.log("New release songs data received:", newReleaseSongsData);
       if (newReleaseSongsData) {
         setNewReleasesSongs(newReleaseSongsData);
       }
@@ -85,7 +85,7 @@ export default function HomeScreen({ navigation }: any) {
     }
         const playlists = hubData.sections[0].items;
     
-    console.log("Playlists data:", playlists);
+    // console.log("Playlists data:", playlists);
     return Array.isArray(playlists) ? playlists.slice(0, 5) : [];
   };
 
