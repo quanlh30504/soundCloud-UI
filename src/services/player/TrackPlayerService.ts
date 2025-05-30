@@ -34,6 +34,7 @@ class TrackPlayerService {
           Capability.SkipToPrevious,
           Capability.SeekTo,
         ],
+        progressUpdateEventInterval: 1,
         compactCapabilities: [Capability.Play, Capability.Pause],
         android: {
         // This is the default behavior

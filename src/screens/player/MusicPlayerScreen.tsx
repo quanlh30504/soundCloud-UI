@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { View, Text,StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image, } from "react-native";
 import Slider from "@react-native-community/slider";
-import TrackPlayer, { useProgress, useTrackPlayerEvents, Event, Track } from "react-native-track-player";
+import TrackPlayer, { useProgress, useTrackPlayerEvents, usePlaybackState, Event, Track } from "react-native-track-player";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../../contexts/ThemeContext";
 import trackPlayerService, { TrackInfo } from "../../services/player/TrackPlayerService";
 import MoreOptionsMenu from "../../components/common/MoreOptionsMenu";
+import SleepTimerModal from "../../components/common/SleepTimerModal";
 import QueueScreen from './QueueScreen';
 import LyricsScreen from './LyricsScreen';
 import {RepeatMode, State} from 'react-native-track-player';
 import { Visualize } from "../../components/visualize/Visualize";
+import sleepTimerService from "../../services/player/SleepTimerService";
 
 const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}) => {
   const { theme } = useTheme();
@@ -19,8 +21,7 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
     text: "#FFFFFF",
     secondary: "#AAAAAA",
   };
-  
-  const [trackInfo, setTrackInfo] = useState<TrackInfo>({id: "", title: "", artist: "", artwork: null });
+    const [trackInfo, setTrackInfo] = useState<TrackInfo>({id: "", title: "", artist: "", artwork: null });
   const [isPlaying, setIsPlaying] = useState(false);
   // const [repeatMode, setRepeatMode] = useState(0);
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
@@ -28,10 +29,13 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
   const [isLiked, setIsLiked] = useState(false);
   const [queueScreenVisible, setQueueScreenVisible] = useState(false);
   const [lyricsScreenVisible, setLyricsScreenVisible] = useState(false);
+  const [sleepTimerModalVisible, setSleepTimerModalVisible] = useState(false);
   const [isRepeating, setIsRepeating] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isSleepTimerActive, setIsSleepTimerActive] = useState(false);
   
   const progress = useProgress();
+  const playerState = usePlaybackState();
   
   useTrackPlayerEvents([Event.PlaybackActiveTrackChanged], async (event) => {
     if (event.type === Event.PlaybackActiveTrackChanged) {
@@ -39,17 +43,30 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
       checkLikeStatus();
     }
   });
-  
   useEffect(() => {
     const setup = async () => {
       await trackPlayerService.setup();
       await loadTrackInfo();
-      const playing = await trackPlayerService.isPlaying();
-      setIsPlaying(playing);
+      // const playing = await trackPlayerService.isPlaying();
+      // setIsPlaying(playing);
       checkLikeStatus();
+      checkSleepTimerStatus();
     };
     
     setup();
+  }, []);
+
+  useEffect(() => {
+    setIsPlaying(playerState.state === State.Playing);
+  }, [playerState]);
+
+  useEffect(() => {
+    // Check sleep timer status periodically
+    const interval = setInterval(() => {
+      checkSleepTimerStatus();
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(interval);
   }, []);
   
   const loadTrackInfo = async () => {
@@ -67,13 +84,17 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
     console.log("Current track ID:", trackId);
     setCurrentTrackId(trackId);
   };
-  
-  const checkLikeStatus = async () => {
+    const checkLikeStatus = async () => {
     const trackId = await trackPlayerService.getCurrentTrackId();
     if (trackId) {
       const liked = await trackPlayerService.isTrackLiked(trackId);
       setIsLiked(liked);
     }
+  };
+
+  const checkSleepTimerStatus = () => {
+    const isActive = sleepTimerService.isTimerActive();
+    setIsSleepTimerActive(isActive);
   };
   
   const toggleRepeatMode = async () => {
@@ -93,7 +114,7 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
 
   const handlePlayPause = async () => {
     const playing = await trackPlayerService.togglePlayback();
-    setIsPlaying(playing);
+    // setIsPlaying(playing);
   };
   
   const handleNext = async () => {
@@ -137,7 +158,6 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
       trackArtwork: currentTrack.artwork
     });
   };
-
   const handleLikeToggle = async () => {
     if (!currentTrackId) return;
     console.log("Toggling like status for track ID:", currentTrackId);
@@ -147,6 +167,15 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
     } else {
       console.error("Failed to toggle like status");
     }
+  };
+
+  const handleOpenSleepTimer = () => {
+    setSleepTimerModalVisible(true);
+  };
+
+  const handleCloseSleepTimer = () => {
+    setSleepTimerModalVisible(false);
+    checkSleepTimerStatus(); // Update status when modal closes
   };
 
   const handleOpenQueue = () => {
@@ -270,10 +299,9 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
             onPress={handleLikeToggle}
           />
         </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.additionalButton}>
+          <TouchableOpacity style={styles.additionalButton} onPress={handleOpenSleepTimer}>
           <Icon name="time-outline" size={24}
-            color={themeStyles.secondary}
+            color={isSleepTimerActive ? themeStyles.primary : themeStyles.secondary}
           />
         </TouchableOpacity>
         
@@ -329,13 +357,19 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
         visible={queueScreenVisible}
         onClose={handleCloseQueue}
       />
-      
-      {/* Lyrics Screen */}
+        {/* Lyrics Screen */}
       <LyricsScreen
         visible={lyricsScreenVisible}
         onClose={handleCloseLyrics}
         trackId={currentTrackId}
         onLyricPress={handleSeek}
+        themeStyles={themeStyles}
+      />
+
+      {/* Sleep Timer Modal */}
+      <SleepTimerModal
+        visible={sleepTimerModalVisible}
+        onClose={handleCloseSleepTimer}
         themeStyles={themeStyles}
       />
     </SafeAreaView>

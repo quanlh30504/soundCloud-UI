@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   PLAYBACK_SETTINGS: '@playback_settings',
   RECENT_SEARCHES: '@recent_searches',
   OFFLINE_TRACKS: '@offline_tracks',
+  SLEEP_TIMER: '@sleep_timer',
 } as const;
 
 // Hàm helper để lấy offline tracks
@@ -172,7 +173,6 @@ export const storageService = {
       throw error;
     }
   },
-
   // Xóa tất cả dữ liệu
   clearAll: async () => {
     try {
@@ -182,4 +182,35 @@ export const storageService = {
       throw error;
     }
   },
-}; 
+
+  // Lưu sleep timer
+  setSleepTimer: async (timerData: any) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.SLEEP_TIMER, JSON.stringify(timerData));
+    } catch (error) {
+      console.error('Error saving sleep timer:', error);
+      throw error;
+    }
+  },
+
+  // Lấy sleep timer
+  getSleepTimer: async () => {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.SLEEP_TIMER);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error('Error getting sleep timer:', error);
+      throw error;
+    }
+  },
+
+  // Xóa sleep timer
+  clearSleepTimer: async () => {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEYS.SLEEP_TIMER);
+    } catch (error) {
+      console.error('Error clearing sleep timer:', error);
+      throw error;
+    }
+  },
+};
