@@ -138,6 +138,22 @@ export default function PlaylistDetailScreen() {
   const handleCloseMoreOptions = () => {
     setMoreOptionsVisible(false);
   };
+  const handleAddToPlaylist = async () => {
+    if (!selectedTrack) return;
+    
+    // Close the more options menu
+    setMoreOptionsVisible(false);
+    
+    // Navigate to AddToPlaylist screen with track info
+    (navigation as any).navigate('AddToPlaylist', {
+      trackId: selectedTrack.spotifyId,
+      trackName: selectedTrack.name,
+      artistName: selectedTrack.artists.join(', '),
+      trackArtwork: selectedTrack.albumImages && selectedTrack.albumImages.length > 0 
+        ? selectedTrack.albumImages[0].url 
+        : undefined
+    });
+  };
 
   const handleRemoveTrackFromPlaylist = async (trackId: number) => {
     if (!playlist?.id) return;
@@ -370,11 +386,10 @@ export default function PlaylistDetailScreen() {
               icon: 'share-outline', 
               label: 'Share', 
               onPress: () => console.log('Share track', selectedTrack.id) 
-            },
-            { 
+            },            { 
               icon: 'add-outline', 
               label: 'Add to playlist', 
-              onPress: () => console.log('Add to playlist', selectedTrack.id) 
+              onPress: handleAddToPlaylist 
             },
             { 
               icon: 'download-outline', 

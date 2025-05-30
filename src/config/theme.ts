@@ -11,6 +11,8 @@ export const lightTheme = {
     tabBar: '#FFFFFF',
     tabBarInactive: '#999999',
     tabBarActive: '#FF5500',
+    textSecondary: '#666666',
+    error: '#FF3333',
   }
 };
 
@@ -27,5 +29,7 @@ export const darkTheme = {
     tabBar: '#000000',
     tabBarInactive: '#777777',
     tabBarActive: '#FF5500',
+    textSecondary: '#BBBBBB',
+    error: '#FF6666',
   }
 };

@@ -1,8 +1,10 @@
 import { Playlist } from '../types/playlist';
+import { WeekChartInfo } from '../types/zing';
 
 export type RootStackParamList = {
   Home: undefined;
-  Feed: undefined;
+  Trending: undefined;
+  Chart: undefined;
   SearchTab: undefined;
   LibraryTab: {
     screen: string;
@@ -39,4 +41,13 @@ export type RootStackParamList = {
   PlaylistDetail: { playlistId: string };
   ArtistDetail: { alias: string };
   FullHistory: undefined;
+  WeekChartDetail: { 
+    region: string; 
+    data: WeekChartInfo;
+    allChartData?: {
+      vn: WeekChartInfo;
+      us: WeekChartInfo;
+      korea: WeekChartInfo;
+    };
+  };
 };

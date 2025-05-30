@@ -259,6 +259,8 @@ export const likedTracksApi = {
     axiosInstance.get<boolean>(`/own-playlists/liked-tracks/${trackId}/is-liked`),
 };
 
-//===home===//
 
-//TODO: chart
+export const chartApi = {
+  getChartHome: () => 
+    axiosInstance.get<ChartHomeData>('/zingMp3/chart-home'),
+};

@@ -12,7 +12,8 @@ import { storageService } from "../services/storage";
 import { CommonActions } from "@react-navigation/native";
 
 import HomeScreen from "../screens/home/HomeScreen";
-import FeedScreen from "../screens/feed/FeedScreen";
+import ChartScreen from "../screens/chart/ChartScreen";
+import WeekChartDetailScreen from "../screens/chart/WeekChartDetailScreen";
 import SearchScreen from "../screens/search/SearchScreen";
 import LibraryScreen from "../screens/library/LibraryScreen";
 import UpgradeScreen from "../screens/upgrade/UpgradeScreen";
@@ -71,6 +72,16 @@ const SearchStackScreen = () => {
   );
 };
 
+const ChartStackScreen = () => {
+  const ChartStack = createNativeStackNavigator<RootStackParamList>();
+  return (
+    <ChartStack.Navigator screenOptions={{ headerShown: false }}>
+      <ChartStack.Screen name="Chart" component={ChartScreen} />
+      <ChartStack.Screen name="WeekChartDetail" component={WeekChartDetailScreen} />
+    </ChartStack.Navigator>
+  );
+};
+
 export default function BottomTabNavigator({
   setAuthenticated,
 }: {
@@ -103,11 +114,10 @@ export default function BottomTabNavigator({
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
-        }}
-      />
+        }}      />
       <Tab.Screen
-        name="Feed"
-        component={FeedScreen}
+        name="Trending"
+        component={ChartStackScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="list-outline" size={size} color={color} />

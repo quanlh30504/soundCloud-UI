@@ -132,7 +132,8 @@ export interface ChartHomeData {
 
 export interface ChartItemInfo {
   time: number;
-  score: number;
+  hour: string;
+  counter: number;
 }
 
 export interface WeekChartInfo {
