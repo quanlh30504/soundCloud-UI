@@ -322,8 +322,8 @@ export default function PlaylistsScreen() {
 
   const renderPlaylistItem = ({ item }: { item: Playlist }) => {
     // Default image or placeholder
-    const thumbnailUrl = item.images && item.images.length > 0 
-      ? item.images[0].url 
+    const thumbnailUrl = item.thumbnail
+      ? item.thumbnail
       : 'https://fakeimg.pl/80x80';
 
     return (

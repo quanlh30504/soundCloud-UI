@@ -59,6 +59,14 @@ export const playlistApi = {
   // Delete a playlist
   deleteOwnPlaylist: (playlistId: string) => 
     axiosInstance.delete(`/own-playlists/${playlistId}`),
+
+  createOwnPlaylistFromExternalPlaylist: (externalPlaylistId: string) => {
+    return axiosInstance.post<Playlist>(`/own-playlists/from-external-playlist/${externalPlaylistId}`);
+  },
+
+  checkExternalPlaylistSaved: (externalPlaylistId: string) => {
+    return axiosInstance.get<boolean>(`/own-playlists/exist-external-playlist/${externalPlaylistId}`);
+  }
 };
 
 // Auth API

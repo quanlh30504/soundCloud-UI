@@ -14,7 +14,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { darkTheme, lightTheme } from '../../config/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { trackApi, zingPlaylistApi } from '../../services/api';
+import { trackApi, zingPlaylistApi, playlistApi } from '../../services/api';
 import { Playlist, Track } from '../../types/playlist';
 import trackPlayerService from '../../services/player/TrackPlayerService';
 import MoreOptionsMenu from '../../components/common/MoreOptionsMenu';
@@ -24,9 +24,8 @@ import TrackPlayer from 'react-native-track-player';
 export default function PlaylistDetailScreen() {
   const { theme } = useTheme();
   const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
-  const navigation = useNavigation();
-  const route = useRoute();
-  const playlistId = route.params?.playlistId as string;
+  const navigation = useNavigation();  const route = useRoute();
+  const playlistId = (route.params as { playlistId: string })?.playlistId;
 
   const [playlist, setPlaylist] = useState<Album | null>(null);
   const [tracks, setTracks] = useState<SongData[]>([]);
@@ -36,12 +35,20 @@ export default function PlaylistDetailScreen() {
   const [selectedTrack, setSelectedTrack] = useState<SongData | null>(null);
   const [isSelectedTrackLiked, setIsSelectedTrackLiked] = useState<boolean>(false);
   const [removingTrack, setRemovingTrack] = useState<boolean>(false);
+  const [savingPlaylist, setSavingPlaylist] = useState<boolean>(false);
+  const [isPlaylistSaved, setIsPlaylistSaved] = useState<boolean>(false);
 
   useEffect(() => {
     if (playlistId) {
       fetchPlaylistDetails(playlistId);
     }
   }, [playlistId]);
+
+  useEffect(() => {
+    if (playlist?.encodeId) {
+      checkPlaylistSavedStatus(playlist.encodeId);
+    }
+  }, [playlist]);
 
   const fetchPlaylistDetails = async (playlistId: string) => {
     setLoading(true);
@@ -55,6 +62,15 @@ export default function PlaylistDetailScreen() {
       Alert.alert('Error', 'Failed to load playlist. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkPlaylistSavedStatus = async (playlistId: string) => {
+    try {
+      const response = await playlistApi.checkExternalPlaylistSaved(playlistId);
+      setIsPlaylistSaved(response.data);
+    } catch (error) {
+      console.error('Error checking playlist saved status:', error);
     }
   };
 
@@ -206,6 +222,38 @@ export default function PlaylistDetailScreen() {
 //     }
 //   };
 
+  const handleSavePlaylist = async () => {
+    if (!playlist?.encodeId) return;
+    
+    setSavingPlaylist(true);
+    try {
+      await playlistApi.createOwnPlaylistFromExternalPlaylist(playlist.encodeId);
+      setIsPlaylistSaved(true);
+      setMoreOptionsVisible(false);
+      Alert.alert('Success', 'Playlist saved to your library successfully!');
+    } catch (error) {
+      console.error('Error saving playlist:', error);
+      Alert.alert('Error', 'Failed to save playlist. Please try again.');
+    } finally {
+      setSavingPlaylist(false);
+    }
+  };
+
+  const handleAddToPlaylist = async () => {
+    if (!selectedTrack) return;
+    
+    // Close the more options menu
+    setMoreOptionsVisible(false);
+    
+    // Navigate to AddToPlaylist screen with track info
+    (navigation as any).navigate('AddToPlaylist', {
+      trackId: selectedTrack.encodeId,
+      trackName: selectedTrack.title,
+      artistName: selectedTrack.artistsNames || selectedTrack.artists?.join(', '),
+      trackArtwork: selectedTrack.thumbnailM
+    });
+  };
+
   const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
@@ -338,8 +386,7 @@ export default function PlaylistDetailScreen() {
           onRefresh={handleRefresh}
           refreshing={refreshing}
         />
-      )}
-
+      )}      
       {/* More Options Menu for Playlist */}
       {playlist && !selectedTrack && (
         <MoreOptionsMenu
@@ -348,31 +395,21 @@ export default function PlaylistDetailScreen() {
           title={playlist.title}
           subtitle={playlist.artistsNames}
           thumbnailUrl={coverImageUrl}
-          options={[
-            { 
-              icon: 'create-outline', 
-              label: 'Edit', 
-              onPress: () => console.log('Edit playlist', playlist.encodeId)
+          options={[            { 
+              icon: isPlaylistSaved ? 'checkmark-circle' : 'bookmark-outline', 
+              label: isPlaylistSaved ? 'Saved to library' : (savingPlaylist ? 'Saving...' : 'Save to library'), 
+              onPress: isPlaylistSaved ? () => {} : handleSavePlaylist,
+              disabled: isPlaylistSaved || savingPlaylist
             },
             { 
-              icon: 'lock-closed-outline', 
-              label: 'Make private', 
-              onPress: () => console.log('Make private', playlist.encodeId) 
-            },
-            { 
-              icon: 'add-outline', 
-              label: 'Add music', 
-              onPress: () => console.log('Add music', playlist.encodeId) 
-            },
-            { 
-              icon: 'trash-outline', 
-              label: 'Delete', 
-              onPress: () => console.log('Delete playlist', playlist.encodeId)
+              icon: 'share-outline', 
+              label: 'Share', 
+              onPress: () => console.log('Share playlist', playlist.encodeId) 
             },
             { 
               icon: 'download-outline', 
-              label: 'Export to json', 
-              onPress: () => console.log('Export playlist', playlist.encodeId) 
+              label: 'Download', 
+              onPress: () => console.log('Download playlist', playlist.encodeId) 
             }
           ]}
         />
@@ -403,7 +440,7 @@ export default function PlaylistDetailScreen() {
             { 
               icon: 'add-outline', 
               label: 'Add to playlist', 
-              onPress: () => console.log('Add to playlist', selectedTrack.encodeId) 
+              onPress: handleAddToPlaylist 
             },
             { 
               icon: 'download-outline', 

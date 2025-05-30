@@ -38,6 +38,7 @@ export interface Playlist {
   spotifyUrl?: string;
   isPublic: boolean;
   collaborative: boolean;
+  thumbnail: string;
 }
 
 export interface CreatePlaylistDTO {

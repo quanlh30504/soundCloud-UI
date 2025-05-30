@@ -230,8 +230,8 @@ export default function PlaylistDetailScreen() {
   };
 
   // Default playlist cover image
-  const coverImageUrl = playlist?.images && playlist.images.length > 0 
-    ? playlist.images[0].url 
+  const coverImageUrl = playlist?.thumbnail
+    ? playlist.thumbnail
     : 'https://fakeimg.pl/200x200';
 
   return (
