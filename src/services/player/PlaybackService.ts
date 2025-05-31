@@ -35,8 +35,12 @@ module.exports = async function() {
           rating: isLiked ? 1 : 0,
         });
       }
-      await trackApi.syncTrackToDb(data.track.id);
-      await userHistoryApi.addSongToListenHistory(data.track.id);
+    }
+    if (data.track) {
+      await trackApi.syncTrackToDb(data.track.id).then(() => {console.log('Track synced to DB:')});
+      await userHistoryApi.addSongToListenHistory(data.track.id).then(() => {
+        console.log('Track added to listen history:')
+      });
     }
   }); 
 };

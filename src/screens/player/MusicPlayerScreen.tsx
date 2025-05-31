@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text,StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image, } from "react-native";
+import { View, Text,StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image, Alert } from "react-native";
 import Slider from "@react-native-community/slider";
 import TrackPlayer, { useProgress, useTrackPlayerEvents, usePlaybackState, Event, Track } from "react-native-track-player";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -7,11 +7,15 @@ import { useTheme } from "../../contexts/ThemeContext";
 import trackPlayerService, { TrackInfo } from "../../services/player/TrackPlayerService";
 import MoreOptionsMenu from "../../components/common/MoreOptionsMenu";
 import SleepTimerModal from "../../components/common/SleepTimerModal";
+import SongInfoModal from "../../components/common/SongInfoModal";
 import QueueScreen from './QueueScreen';
 import LyricsScreen from './LyricsScreen';
 import {RepeatMode, State} from 'react-native-track-player';
 import { Visualize } from "../../components/visualize/Visualize";
 import sleepTimerService from "../../services/player/SleepTimerService";
+import { trackApi } from "../../services/api";
+import { SongData } from "../../types/zing";
+import NavigationService from "../../services/navigation/NavigationService";
 
 const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}) => {
   const { theme } = useTheme();
@@ -27,9 +31,10 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [moreOptionsVisible, setMoreOptionsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [queueScreenVisible, setQueueScreenVisible] = useState(false);
-  const [lyricsScreenVisible, setLyricsScreenVisible] = useState(false);
+  const [queueScreenVisible, setQueueScreenVisible] = useState(false);  const [lyricsScreenVisible, setLyricsScreenVisible] = useState(false);
   const [sleepTimerModalVisible, setSleepTimerModalVisible] = useState(false);
+  const [songInfoModalVisible, setSongInfoModalVisible] = useState(false);
+  const [currentSongData, setCurrentSongData] = useState<SongData | null>(null);
   const [isRepeating, setIsRepeating] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isSleepTimerActive, setIsSleepTimerActive] = useState(false);
@@ -189,9 +194,56 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
   const handleOpenLyrics = () => {
     setLyricsScreenVisible(true);
   };
-  
-  const handleCloseLyrics = () => {
+    const handleCloseLyrics = () => {
     setLyricsScreenVisible(false);
+  };
+
+  const handleOpenSongInfo = async () => {
+    if (!currentTrackId) {
+      Alert.alert('Error', 'No track is currently playing');
+      return;
+    }
+
+    try {
+      const response = await trackApi.getTrackInfo(currentTrackId);
+      setCurrentSongData(response.data);
+      setSongInfoModalVisible(true);
+      setMoreOptionsVisible(false); // Close the more options menu
+    } catch (error) {
+      console.error('Error fetching song info:', error);
+      Alert.alert('Error', 'Failed to load song information');
+    }
+  };
+
+  const handleCloseSongInfo = () => {
+    setSongInfoModalVisible(false);
+  };
+
+  const handleViewArtist = async () => {
+    if (!currentTrackId) {
+      Alert.alert('Error', 'No track is currently playing');
+      return;
+    }
+
+    try {
+      const response = await trackApi.getTrackInfo(currentTrackId);
+      const songData = response.data;
+      
+      if (songData.artists && songData.artists.length > 0) {
+        const firstArtist = songData.artists[0];
+        if (firstArtist.alias) {
+          setMoreOptionsVisible(false); // Close the more options menu
+          NavigationService.navigateToArtist(firstArtist.alias);
+        } else {
+          Alert.alert('Error', 'Artist information not available');
+        }
+      } else {
+        Alert.alert('Error', 'No artist information found');
+      }
+    } catch (error) {
+      console.error('Error fetching artist info:', error);
+      Alert.alert('Error', 'Failed to load artist information');
+    }
   };
 
   const formatTime = (seconds: number): string => {
@@ -338,16 +390,15 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
             icon: 'share-outline', 
             label: 'Share', 
             onPress: () => console.log('Share track') 
-          },
-          { 
+          },          { 
             icon: 'information-circle-outline', 
             label: 'Song info', 
-            onPress: () => console.log('View song info') 
+            onPress: handleOpenSongInfo 
           },
           { 
             icon: 'person-outline', 
             label: 'View artist', 
-            onPress: () => console.log('View artist') 
+            onPress: handleViewArtist 
           }
         ]}
       />
@@ -364,12 +415,19 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
         trackId={currentTrackId}
         onLyricPress={handleSeek}
         themeStyles={themeStyles}
-      />
-
+      />      
       {/* Sleep Timer Modal */}
       <SleepTimerModal
         visible={sleepTimerModalVisible}
         onClose={handleCloseSleepTimer}
+        themeStyles={themeStyles}
+      />
+
+      {/* Song Info Modal */}
+      <SongInfoModal
+        visible={songInfoModalVisible}
+        onClose={handleCloseSongInfo}
+        songData={currentSongData}
         themeStyles={themeStyles}
       />
     </SafeAreaView>
