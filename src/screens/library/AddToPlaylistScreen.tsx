@@ -175,8 +175,8 @@ export default function AddToPlaylistScreen({ route }: AddToPlaylistScreenProps)
   
   const renderPlaylistItem = ({ item }: { item: Playlist }) => {
     const isSelected = selectedPlaylists.has(item.id);
-    const thumbnailUrl = item.images && item.images.length > 0 
-      ? item.images[0].url 
+    const thumbnailUrl = item.thumbnail
+      ? item.thumbnail
       : 'https://fakeimg.pl/80x80';
 
     return (

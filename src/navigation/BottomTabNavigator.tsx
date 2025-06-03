@@ -12,6 +12,7 @@ import { storageService } from "../services/storage";
 import { CommonActions } from "@react-navigation/native";
 
 import HomeScreen from "../screens/home/HomeScreen";
+import ChillScreen from "../screens/home/ChillScreen";
 import ChartScreen from "../screens/chart/ChartScreen";
 import WeekChartDetailScreen from "../screens/chart/WeekChartDetailScreen";
 import SearchScreen from "../screens/search/SearchScreen";
@@ -29,10 +30,22 @@ import OwnPlaylistDetailScreen from "../screens/library/PlaylistDetailScreen";
 import PlaylistDetailScreen from "../screens/playlist/PlaylistDetailScreen";
 import AddToPlaylistScreen from "screens/library/AddToPlaylistScreen";
 import ArtistScreen from "screens/artists/ArtistDetailScreen";
+import ArtistSongsScreen from "screens/artists/ArtistSongsScreen";
+import ArtistPlaylistsScreen from "screens/artists/ArtistPlaylistsScreen";
 import FullHistoryScreen from "../screens/library/FullHistoryScreen";
 
 const Tab = createBottomTabNavigator<RootStackParamList>();
 const LibraryStack = createNativeStackNavigator<RootStackParamList>();
+const HomeStack = createNativeStackNavigator<RootStackParamList>();
+
+const HomeStackScreen = () => {
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="Home" component={HomeScreen} />
+      <HomeStack.Screen name="Chill" component={ChillScreen} />
+    </HomeStack.Navigator>
+  );
+};
 
 const LibraryStackScreen = ({
   setAuthenticated,
@@ -51,11 +64,13 @@ const LibraryStackScreen = ({
       <LibraryStack.Screen name="OwnPlaylists" component={PlaylistsScreen} />
       <LibraryStack.Screen name="Following" component={FollowingScreen} />
       <LibraryStack.Screen name="Stations" component={StationsScreen} />
-      <LibraryStack.Screen name="YourUploads" component={YourUploadsScreen} />
+      <LibraryStack.Screen name="YourUploads" component={YourUploadsScreen} />      
       <LibraryStack.Screen name="Profile" component={ProfileScreen} />
       <LibraryStack.Screen name="OwnPlaylistDetail" component={OwnPlaylistDetailScreen} />
       <LibraryStack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} />
       <LibraryStack.Screen name="ArtistDetail" component={ArtistScreen} />
+      <LibraryStack.Screen name="ArtistSongs" component={ArtistSongsScreen} />
+      <LibraryStack.Screen name="ArtistPlaylists" component={ArtistPlaylistsScreen} />
       <LibraryStack.Screen name="AddToPlaylist" component={AddToPlaylistScreen} />
       <LibraryStack.Screen name="FullHistory" component={FullHistoryScreen} />
     </LibraryStack.Navigator>
@@ -90,9 +105,8 @@ export default function BottomTabNavigator({
   const { theme } = useTheme();
   const themeStyles = theme === "dark" ? darkTheme : lightTheme;
 
-  return (
-    <Tab.Navigator
-      initialRouteName="Home"
+  return (    <Tab.Navigator
+      initialRouteName="HomeTab"
       screenOptions={{
         tabBarActiveTintColor: themeStyles.colors.tabBarActive,
         tabBarInactiveTintColor: themeStyles.colors.tabBarInactive,
@@ -103,18 +117,18 @@ export default function BottomTabNavigator({
         headerStyle: {
           backgroundColor: themeStyles.colors.background,
         },
-        headerTintColor: themeStyles.colors.text,
-        headerShown: false,
+        headerTintColor: themeStyles.colors.text,        headerShown: false,
       }}
     >
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
+        name="HomeTab"
+        component={HomeStackScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
-        }}      />
+        }}
+      />
       <Tab.Screen
         name="Trending"
         component={ChartStackScreen}
@@ -153,11 +167,10 @@ export default function BottomTabNavigator({
           tabPress: (e) => {
             // Prevent default behavior
             e.preventDefault();
-            
-            // Check if we're already on the Library stack
-            if (navigation.getState().routes.find((r) => r.name === 'LibraryTab')) {
+              // Check if we're already on the Library stack
+            if (navigation.getState().routes.find((r: any) => r.name === 'LibraryTab')) {
               // Get current route from the LibraryTab stack
-              const libraryState = navigation.getState().routes.find((r) => r.name === 'LibraryTab')?.state;
+              const libraryState = navigation.getState().routes.find((r: any) => r.name === 'LibraryTab')?.state;
               
               // If we're not at the root Library screen (or the tab is not focused)
               if (!libraryState || libraryState.index !== 0) {

@@ -195,7 +195,7 @@ export default function HomeScreen({ navigation }: any) {
               
               <TouchableOpacity
                 style={styles.seeAllButton}
-                onPress={() => navigation.navigate('ChillHub', { hubId: hubData?.encodeId })}
+                onPress={() => navigation.navigate('Chill', { hubId: hubData?.encodeId })}
               >
                 <View style={styles.seeAllCircle}>
                   <Icon name="chevron-forward" size={24} color="#ffffff" />
