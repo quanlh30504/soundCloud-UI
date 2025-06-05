@@ -4,7 +4,7 @@ import { CreatePlaylistDTO, PagedResponse, Playlist, Track } from '../types/play
 import { SongData, Artist, Album,
   Genre, Composer, StreamData,
   SyncResponse, Top100, HubDetail,
-  ChartHomeData, ChartItemInfo, WeekChartInfo } from '../types/zing';
+  ChartHomeData, ChartItemInfo, WeekChartInfo, RecommendKeyword, AcSuggestions } from '../types/zing';
 import { HistoryPage, ListeningHistoryDTO } from '../types/history';
 import { storageService } from '../services/storage';
 
@@ -219,6 +219,12 @@ export const searchApi = {
   //search type
   searchType: (query: string, type: searchType, page: number=0, size: number=20) => 
     axiosInstance.get('/zingMp3/search', { params: { type, query, page, count: size } }),
+
+  getRecommendKeywords: () =>
+    axiosInstance.get<RecommendKeyword[]>('/zingMp3/recommend-keyword'),
+
+  getAcSuggestions: (query: string) =>
+    axiosInstance.get<AcSuggestions>('/zingMp3/ac-suggestions', { params: { query } })
 }
 
 // // Zing Playlist API

@@ -140,3 +140,33 @@ export interface WeekChartInfo {
   playlistId: string;
   items: SongData[];
 }
+
+export interface RecommendKeyword {
+  keyword: string;
+  link: string;
+}
+
+export interface AcSuggestions {
+  tracking: string;
+  items: AcSuggestionsItem[];
+}
+
+export interface AcSuggestionsItem {
+  keywords: Keyword[] | null;
+  suggestions: SongDataRecommend[] | null;
+}
+
+export interface Keyword {
+  type: number;
+  keyword: string;
+  suggestType: number;
+}
+
+export interface SongDataRecommend {
+  id: string;
+  title: string;
+  thumb: string;
+  artists: Artist[];
+  genres: Genre[];
+}
+
