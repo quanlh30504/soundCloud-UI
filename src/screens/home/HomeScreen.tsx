@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {View,Text,StyleSheet,ScrollView,Image,TouchableOpacity,ImageBackground, ActivityIndicator} from "react-native";
+import {View,Text,StyleSheet,ScrollView,Image,TouchableOpacity,ImageBackground, ActivityIndicator, RefreshControl} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import trackPlayerService from "../../services/player/TrackPlayerService";
@@ -14,11 +14,11 @@ export default function HomeScreen({ navigation }: any) {
   const themeStyles = theme === "dark" ? darkTheme : lightTheme;
 
   const backgroundColor = "#121212";
-
   const [newReleasesSongs, setNewReleasesSongs] = useState([]);
   const [newReleasesAlbums, setNewReleasesAlbums] = useState([]);
   const [recommendedSongs, setRecommendedSongs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [hubData, setHubData] = useState<[]>();
   const [top100Items, setTop100Items] = useState([]);
@@ -26,7 +26,6 @@ export default function HomeScreen({ navigation }: any) {
   useEffect(() => {
     fetchHomeData();
   }, []);
-
   const fetchHomeData = async () => {
     setIsLoading(true);
     try {
@@ -66,6 +65,15 @@ export default function HomeScreen({ navigation }: any) {
       setIsLoading(false);
     }
   }
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchHomeData();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleTrackPress = async (trackId: string) => {
     await trackPlayerService.setup();
@@ -108,11 +116,18 @@ export default function HomeScreen({ navigation }: any) {
             <Icon name="notifications-outline" size={22} color="#ffffff" />
           </TouchableOpacity>
         </View>
-      </View>
-
+      </View>      
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#ff5500"
+            colors={["#ff5500"]}
+          />
+        }
       >
         {/* Recommended Section */}
         {/* <View style={styles.section}>

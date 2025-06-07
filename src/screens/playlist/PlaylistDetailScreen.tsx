@@ -278,7 +278,7 @@ export default function PlaylistDetailScreen() {
             {item.title}
           </Text>
           <Text style={[styles.artistName, { color: themeStyles.colors.secondary }]} numberOfLines={1}>
-            {item.artists.join(', ')}
+            {item.artistsNames}
           </Text>
           <Text style={[styles.trackDuration, { color: themeStyles.colors.secondary }]}>
             {formatDuration(item.duration*1000)}

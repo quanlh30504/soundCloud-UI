@@ -155,7 +155,7 @@ export default function BottomTabNavigator({
             <Ionicons name="search-outline" size={size} color={color} />
           ),
         }}
-      />
+      />      
       <Tab.Screen
         name="LibraryTab"
         options={{
@@ -167,29 +167,30 @@ export default function BottomTabNavigator({
           tabPress: (e) => {
             // Prevent default behavior
             e.preventDefault();
-              // Check if we're already on the Library stack
-            if (navigation.getState().routes.find((r: any) => r.name === 'LibraryTab')) {
-              // Get current route from the LibraryTab stack
-              const libraryState = navigation.getState().routes.find((r: any) => r.name === 'LibraryTab')?.state;
-              
-              // If we're not at the root Library screen (or the tab is not focused)
-              if (!libraryState || libraryState.index !== 0) {
-                // Reset to the root Library screen
-                navigation.dispatch({
-                  ...CommonActions.navigate({
-                    name: 'LibraryTab',
-                    params: { 
-                      screen: 'Library'
-                    }
+            
+            // Get current state
+            const state = navigation.getState();
+            const currentRoute = state.routes[state.index];
+            
+            // Check if we're already on LibraryTab
+            if (currentRoute.name === 'LibraryTab') {
+              // Check if we're on the root Library screen
+              const nestedState = currentRoute.state;
+              if (nestedState && nestedState.index > 0) {
+                // We're in a nested screen, reset to Library root
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'LibraryTab', params: { screen: 'Library' } }],
                   })
-                });
+                );
               } else {
-                // If already at the root Library screen, just focus the tab
-                navigation.navigate('LibraryTab');
+                // Already at Library root, just ensure it's focused
+                navigation.navigate('LibraryTab', { screen: 'Library' });
               }
             } else {
-              // Not on the Library tab, navigate normally
-              navigation.navigate('LibraryTab');
+              // Navigate to LibraryTab for the first time
+              navigation.navigate('LibraryTab', { screen: 'Library' });
             }
           },
         })}

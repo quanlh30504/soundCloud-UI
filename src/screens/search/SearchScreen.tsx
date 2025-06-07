@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {View,Text,StyleSheet,ScrollView,Image,TouchableOpacity,TextInput,Dimensions,StatusBar,SafeAreaView,FlatList,ActivityIndicator,} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
 import { searchApi, trackApi } from '../../services/api';
 import { RecommendKeyword, AcSuggestions, SongDataRecommend, SongData } from '../../types/zing';
 import trackPlayerService from '../../services/player/TrackPlayerService';
@@ -13,10 +14,9 @@ type NavigationProps = {
 interface Genre {
   id: string;
   name: string;
-  backgroundColor: string;
+  backgroundColor: string[];
   borderColor: string;
-  imageSource: any;
-  width: number;
+  width: number | string;
   height: number;
 }
 
@@ -28,74 +28,66 @@ const genreData: Genre[] = [
   {
     id: 'hiphop',
     name: 'Hip Hop & Rap',
-    backgroundColor: '#682FBF',
+    backgroundColor: ['#667eea', '#764ba2'],
     borderColor: '#8343E2',
-    imageSource: require('../../../assets/images/genres/pop.png'),
-    width: (width - cardMargin * 2 - cardGap) / 2,
-    height: 170,
+    width: '100%',
+    height: 120,
   },
   {
     id: 'electronic',
     name: 'Electronic',
-    backgroundColor: '#DD3A7D',
+    backgroundColor: ['#f093fb', '#f5576c'],
     borderColor: '#FF4F9A',
-    imageSource: require('../../../assets/images/genres/pop.png'),
-    width: (width - cardMargin * 2 - cardGap) / 2,
-    height: 280,
+    width: '100%',
+    height: 140,
   },
   {
     id: 'pop',
     name: 'Pop',
-    backgroundColor: '#E6B800',
+    backgroundColor: ['#4facfe', '#00f2fe'],
     borderColor: '#FFCC00',
-    imageSource: require('../../../assets/images/genres/pop.png'),
-    width: (width - cardMargin * 2 - cardGap) / 2,
-    height: 280,
+    width: '100%',
+    height: 100,
   },
   {
     id: 'rnb',
     name: 'R&B',
-    backgroundColor: '#00A3CC',
+    backgroundColor: ['#43e97b', '#38f9d7'],
     borderColor: '#00BFEF',
-    imageSource: require('../../../assets/images/genres/pop.png'),
-    width: (width - cardMargin * 2 - cardGap) / 2,
-    height: 120,
+    width: '100%',
+    height: 130,
   },
   {
     id: 'chill',
     name: 'Chill',
-    backgroundColor: '#00A3CC',
+    backgroundColor: ['#fa709a', '#fee140'],
     borderColor: '#00BFEF',
-    imageSource: require('../../../assets/images/genres/pop.png'),
-    width: (width - cardMargin * 2 - cardGap) / 2,
-    height: 120,
+    width: '100%',
+    height: 110,
   },
   {
     id: 'party',
     name: 'Party',
-    backgroundColor: '#DD6B3A',
+    backgroundColor: ['#ff9a9e', '#fecfef'],
     borderColor: '#FF7F47',
-    imageSource: require('../../../assets/images/genres/pop.png'),
-    width: (width - cardMargin * 2 - cardGap) / 2,
-    height: 170,
+    width: '100%',
+    height: 120,
   },
   {
     id: 'workout',
     name: 'Workout',
-    backgroundColor: '#0DBF6C',
+    backgroundColor: ['#a8edea', '#fed6e3'],
     borderColor: '#10DE7D',
-    imageSource: require('../../../assets/images/genres/pop.png'),
-    width: (width - cardMargin * 2 - cardGap) / 2,
-    height: 170,
+    width: '100%',
+    height: 140,
   },
   {
     id: 'techno',
     name: 'Techno',
-    backgroundColor: '#DD3A7D',
+    backgroundColor: ['#d299c2', '#fef9d7'],
     borderColor: '#FF4F9A',
-    imageSource: require('../../../assets/images/genres/pop.png'),
-    width: (width - cardMargin * 2 - cardGap) / 2,
-    height: 170,
+    width: '100%',
+    height: 110,
   },
 ];
 
@@ -301,41 +293,36 @@ const SearchScreen: React.FC = () => {
         )}
       </View>
     );
-  };
-
-  const renderGenreCard = (genre: Genre, index: number) => (
+  };  const renderGenreCard = (genre: Genre, index: number) => (
     <TouchableOpacity
       key={genre.id}
       style={[
         styles.genreCard,
         {
-          width: genre.width,
+          width: genre.width as any,
           height: genre.height,
-          backgroundColor: genre.backgroundColor,
-          borderColor: genre.borderColor,
-          marginLeft: index % 2 === 0 ? cardMargin : cardGap / 2,
-          marginRight: index % 2 === 1 ? cardMargin : cardGap / 2,
         }
       ]}
       onPress={() => handleGenrePress(genre.id, genre.name)}
     >
-      <Text style={styles.genreName}>{genre.name}</Text>
-      <View style={styles.curveContainer}>
-        {[...Array(5)].map((_, i) => (
-          <View 
-            key={i} 
-            style={[
-              styles.curve, 
-              { 
-                right: -10 - i * 15, 
-                bottom: -40 - i * 20,
-                borderColor: `${genre.borderColor}${30 - i * 5}`,
-              }
-            ]} 
-          />
-        ))}
-        <Image source={genre.imageSource} style={styles.genreImage} />
-      </View>
+      <LinearGradient
+        colors={genre.backgroundColor}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.genreCardBackground}
+      >
+        <View style={styles.genreCardContent}>
+          <Text style={styles.genreName}>{genre.name}</Text>
+        </View>
+        
+        {/* Decorative circles */}
+        <View style={[styles.decorativeCircle, styles.circle1]} />
+        <View style={[styles.decorativeCircle, styles.circle2]} />
+        <View style={[styles.decorativeCircle, styles.circle3]} />
+        
+        {/* Glassmorphism overlay */}
+        <View style={styles.glassmorphismOverlay} />
+      </LinearGradient>
     </TouchableOpacity>
   );
 
@@ -396,8 +383,7 @@ const SearchScreen: React.FC = () => {
       )}
 
       {/* Title */}
-      {!showSuggestions && <Text style={styles.title}>Vibes</Text>}
-
+      {!showSuggestions && <Text style={styles.title}>Vibes</Text>}      
       {/* Genre Grid */}
       {!showSuggestions && (
         <ScrollView 
@@ -405,8 +391,20 @@ const SearchScreen: React.FC = () => {
           contentContainerStyle={styles.scrollViewContent}          
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.gridContainer}>
-            {genreData.map((genre, index) => renderGenreCard(genre, index))}
+          <View style={styles.staggeredContainer}>
+            {/* Left Column */}
+            <View style={styles.columnContainer}>
+              {genreData.filter((_, index) => index % 2 === 0).map((genre, index) => 
+                renderGenreCard(genre, index * 2)
+              )}
+            </View>
+            
+            {/* Right Column */}
+            <View style={styles.columnContainer}>
+              {genreData.filter((_, index) => index % 2 === 1).map((genre, index) => 
+                renderGenreCard(genre, index * 2 + 1)
+              )}
+            </View>
           </View>
           
           <View style={{ height: 100 }} />
@@ -497,28 +495,84 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexGrow: 1,
-  },
-  gridContainer: {
+  },  gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
     paddingBottom: 16,
   },
-  genreCard: {
-    borderRadius: 12,
-    borderWidth: 1.5,
+  staggeredContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: cardMargin,
+    paddingBottom: 16,
+  },
+  columnContainer: {
+    flex: 1,
+    paddingHorizontal: cardGap / 2,
+  },  genreCard: {
+    borderRadius: 16,
     marginBottom: 12,
     overflow: 'hidden',
     position: 'relative',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  genreCardBackground: {
+    flex: 1,
+    position: 'relative',
+    borderRadius: 16,
+  },  
+  genreCardContent: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'center',
+    zIndex: 2,
   },
   genreName: {
     color: '#ffffff',
     fontWeight: 'bold',
-    fontSize: 16,
-    position: 'absolute',
-    top: 12,
-    left: 12,
+    fontSize: 18,
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
     zIndex: 10,
+    textAlign: 'center',
+  },
+  decorativeCircle: {
+    position: 'absolute',
+    borderRadius: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  circle1: {
+    width: 80,
+    height: 80,
+    top: -20,
+    right: -20,
+  },
+  circle2: {
+    width: 60,
+    height: 60,
+    bottom: -10,
+    left: -10,
+  },
+  circle3: {
+    width: 40,
+    height: 40,
+    top: '50%',
+    left: -5,
+  },  glassmorphismOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   curveContainer: {
     flex: 1,
@@ -531,13 +585,6 @@ const styles = StyleSheet.create({
     height: 300,
     borderRadius: 150,
     borderWidth: 1.5,
-  },  genreImage: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: '100%',
-    height: '80%',
-    resizeMode: 'contain',
   },
   // Suggestion overlay styles
   suggestionsOverlay: {

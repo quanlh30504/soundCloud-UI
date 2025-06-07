@@ -31,12 +31,23 @@ export const NavigationService = {
       console.warn('Navigation attempted before navigator was ready');
     }
   },
-
   navigateToPlaylist: (playlistId: string) => {
     if (navigationRef.isReady()) {
       navigationRef.navigate('LibraryTab', {
         screen: 'PlaylistDetail',
         params: { playlistId }
+      });
+    } else {
+      console.warn('Navigation attempted before navigator was ready');
+    }
+  },
+  navigateToOwnPlaylist: (playlistId: string) => {
+    console.log('Navigating to own playlist with ID:', playlistId);
+    const playlist = {id: playlistId};
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('LibraryTab', {
+        screen: 'OwnPlaylistDetail',
+        params: { playlist }
       });
     } else {
       console.warn('Navigation attempted before navigator was ready');

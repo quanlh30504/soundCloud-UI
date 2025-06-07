@@ -1,7 +1,9 @@
 {
   "expo": {
-    "name": "sound-cloud",
-    "slug": "sound-cloud",
+    "scheme": "vibestream",
+    "deepLinks": true,
+    "name": "VibeStream",
+    "slug": "vibestream",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,11 +22,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.qmt.soundcloud"
+      "package": "com.qmt.vibestream"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    
     "plugins": [
       "expo-font"
     ]

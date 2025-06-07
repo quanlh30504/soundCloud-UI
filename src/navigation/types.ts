@@ -35,9 +35,8 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   Main: undefined;
-  MusicPlayer: undefined;
-  AlbumDetail: { albumId: string };
-  OwnPlaylistDetail: { playlist: Playlist };
+  MusicPlayer: undefined;  AlbumDetail: { albumId: string };
+  OwnPlaylistDetail: { playlistId: string };
   SearchResults: { query: string };
   PlaylistDetail: { playlistId: string };
   ArtistDetail: { alias: string };

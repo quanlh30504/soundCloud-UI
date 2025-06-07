@@ -29,6 +29,7 @@ import { Playlist } from '../../types/playlist';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import MoreOptionsMenu from '../../components/common/MoreOptionsMenu';
+import ShareService from '../../services/ShareService';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -314,7 +315,23 @@ export default function PlaylistsScreen() {
       ]
     );
   };
-  
+
+  // Hàm xử lý chia sẻ playlist
+  const handleSharePlaylist = async () => {
+    if (!selectedPlaylist) return;
+    
+    setMoreOptionsVisible(false);
+    await ShareService.sharePlaylist(selectedPlaylist.id, selectedPlaylist.name);
+  };
+
+  // Hàm copy link playlist
+  const handleCopyPlaylistLink = async () => {
+    if (!selectedPlaylist) return;
+    
+    setMoreOptionsVisible(false);
+    await ShareService.copyPlaylistUrl(selectedPlaylist.id, selectedPlaylist.name);
+  };
+
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [300, 0],
@@ -460,6 +477,15 @@ export default function PlaylistsScreen() {
               icon: 'add-outline', 
               label: 'Add music', 
               onPress: () => console.log('Add music', selectedPlaylist.id) 
+            },            { 
+              icon: 'share-outline', 
+              label: 'Share', 
+              onPress: handleSharePlaylist 
+            },
+            { 
+              icon: 'copy-outline', 
+              label: 'Copy link', 
+              onPress: handleCopyPlaylistLink 
             },
             { 
               icon: 'trash-outline', 

@@ -16,6 +16,7 @@ import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import { storageService } from '../services/storage';
 import { auth } from '../config/firebase';
 import { signOut } from 'firebase/auth';
+import DeepLinkService from '../services/DeepLinkService';
 
 const MainStack = createNativeStackNavigator();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -46,7 +47,6 @@ export default function AppNavigator({
       console.error('Logout error:', error);
     }
   };
-
   useEffect(() => {
     const setupPlayer = async () => {
       try {
@@ -63,6 +63,35 @@ export default function AppNavigator({
 
     setupPlayer();
   }, []);
+
+  // Xử lý deep links
+  useEffect(() => {
+    let deepLinkListener: any;
+
+    const setupDeepLinks = async () => {
+      // Xử lý deep link khi app được mở từ deep link
+      const initialUrl = await DeepLinkService.getInitialDeepLink();
+      if (initialUrl) {
+        // Đợi navigation sẵn sàng
+        setTimeout(() => {
+          DeepLinkService.handleDeepLink(initialUrl);
+        }, 1000);
+      }
+
+      // Lắng nghe deep links khi app đang chạy
+      deepLinkListener = DeepLinkService.addDeepLinkListener();
+    };
+
+    if (isAuthenticated && isPlayerReady) {
+      setupDeepLinks();
+    }
+
+    return () => {
+      if (deepLinkListener?.remove) {
+        deepLinkListener.remove();
+      }
+    };
+  }, [isAuthenticated, isPlayerReady]);
 
   const MainStackScreen = ({ 
     setAuthenticated 
@@ -91,8 +120,7 @@ export default function AppNavigator({
     return null;
   }
 
-  return (
-    <NavigationContainer ref={navigationRef} theme={{
+  return (    <NavigationContainer ref={navigationRef} theme={{
       dark: theme === "dark",
       colors: {
         primary: themeStyles.colors.primary,
@@ -100,7 +128,7 @@ export default function AppNavigator({
         card: themeStyles.colors.card,
         text: themeStyles.colors.text,
         border: themeStyles.colors.border,
-        notification: themeStyles.colors.notification,
+        notification: themeStyles.colors.primary,
       }
     }}>
       {/* Wrap with a View to position mini player */}
