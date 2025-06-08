@@ -11,7 +11,9 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
-android/
+/android/
+!/modules/widget/android/
+/modules/widget/android/build/
 ios/
 
 # Native
