@@ -18,6 +18,7 @@ import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-nativ
 import trackPlayerService from '../../services/player/TrackPlayerService';
 import MoreOptionsMenu from '../../components/common/MoreOptionsMenu';
 import {RepeatMode, State} from 'react-native-track-player';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 interface QueueData {
   beforeActive: Track[];
   active: Track | null;
@@ -117,6 +118,7 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
   };
 
   const handleDragEnd = async ({ from, to, data }: { from: number; to: number; data: Track[] }) => {
+    console.log('Drag ended from:', from, 'to:', to, 'data:', data);
     // Convert "afterActive" indices to global queue indices
     const actualFromIndex = queueData.beforeActive.length + (queueData.active ? 1 : 0) + from;
     const actualToIndex = queueData.beforeActive.length + (queueData.active ? 1 : 0) + to;
@@ -196,8 +198,6 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
       <TouchableOpacity
         style={[styles.trackItem, isActive && styles.activeTrackItem]}
         onPress={() => handlePlayTrack(item.id?.toString() || '')}
-        onLongPress={drag}
-        delayLongPress={150} // Reduce delay to make dragging more responsive
       >
         <Image
           source={{ uri: item.artwork ? String(item.artwork) : 'https://fakeimg.pl/60x60' }}
@@ -213,7 +213,7 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
         </View>
         <TouchableOpacity
           style={styles.dragHandle}
-          onPressIn={drag} // Use onPressIn instead of onLongPress for more immediate response
+          onPressIn={drag}
         >
           <Ionicons name="reorder-three" size={24} color="#AAAAAA" />
         </TouchableOpacity>
@@ -259,7 +259,7 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
               renderItem={renderAfterActiveTrackItem}
               keyExtractor={(item, index) => `after-${item.id || index}`}
               onDragEnd={handleDragEnd}
-              scrollEnabled={false} // Disable scrolling in DraggableFlatList
+              scrollEnabled={false}
               dragHitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             />
           </View>
@@ -280,6 +280,7 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
       transparent={false}
       onRequestClose={onClose}
     >
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaView style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
@@ -346,6 +347,7 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
             ]}
           />
         </SafeAreaView>
+      </GestureHandlerRootView>
     </Modal>
   );
 };
