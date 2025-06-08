@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Alert, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { darkTheme, lightTheme } from '../../config/theme';
@@ -8,24 +8,87 @@ import { auth } from '../../config/firebase';
 import { signOut } from 'firebase/auth';
 import { storageService } from '../../services/storage';
 
-const SettingItem = ({ title }: { title: string }) => {
+type ThemeMode = 'dark' | 'light' | 'system';
+
+const SettingItem = ({ title, onPress, rightElement }: { 
+  title: string; 
+  onPress?: () => void;
+  rightElement?: React.ReactNode;
+}) => {
   const { theme } = useTheme();
   const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
   
   return (
-    <TouchableOpacity style={styles.settingItem}>
+    <TouchableOpacity style={styles.settingItem} onPress={onPress}>
       <Text style={[styles.settingItemText, { color: themeStyles.colors.text }]}>
         {title}
       </Text>
-      <Ionicons name="chevron-forward" size={20} color={themeStyles.colors.secondary} />
+      {rightElement || (
+        <Ionicons name="chevron-forward" size={20} color={themeStyles.colors.secondary} />
+      )}
+    </TouchableOpacity>
+  );
+};
+
+const ThemeOption = ({ 
+  mode, 
+  label, 
+  isSelected, 
+  onSelect 
+}: { 
+  mode: ThemeMode;
+  label: string;
+  isSelected: boolean;
+  onSelect: (mode: ThemeMode) => void;
+}) => {
+  const { theme } = useTheme();
+  const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
+
+  return (
+    <TouchableOpacity 
+      style={[styles.themeOption, { borderBottomColor: themeStyles.colors.border }]}
+      onPress={() => onSelect(mode)}
+    >
+      <View style={styles.themeOptionContent}>
+        <Text style={[styles.themeOptionText, { color: themeStyles.colors.text }]}>
+          {label}
+        </Text>
+        {mode === 'system' && (
+          <Text style={[styles.themeOptionSubtext, { color: themeStyles.colors.secondary }]}>
+            Follow device setting
+          </Text>
+        )}
+      </View>
+      {isSelected && (
+        <Ionicons name="checkmark" size={20} color={themeStyles.colors.primary} />
+      )}
     </TouchableOpacity>
   );
 };
 
 export default function SettingsScreen({ setAuthenticated }: { setAuthenticated: React.Dispatch<React.SetStateAction<boolean | null>> }) {
-  const { theme } = useTheme();
+  const { theme, themeMode, toggleTheme } = useTheme();
   const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
   const navigation = useNavigation();
+  const [themeModalVisible, setThemeModalVisible] = useState(false);
+
+  const getThemeDisplayText = () => {
+    switch (themeMode) {
+      case 'dark':
+        return 'Dark';
+      case 'light':
+        return 'Light';
+      case 'system':
+        return `System (${theme === 'dark' ? 'Dark' : 'Light'})`;
+      default:
+        return 'System';
+    }
+  };
+
+  const handleThemeSelect = (mode: ThemeMode) => {
+    toggleTheme(mode);
+    setThemeModalVisible(false);
+  };
 
   const handleSignOut = async () => {
     try {
@@ -49,23 +112,27 @@ export default function SettingsScreen({ setAuthenticated }: { setAuthenticated:
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: themeStyles.colors.text }]}>Settings</Text>
-        <TouchableOpacity style={styles.iconButton}>
+        {/* <TouchableOpacity style={styles.iconButton}>
           <Ionicons name="tv-outline" size={24} color={themeStyles.colors.icon} />
-        </TouchableOpacity>
-      </View>
-
+        </TouchableOpacity> */}
+      </View>      
       {/* Settings Content */}
       <ScrollView style={styles.content}>
         <SettingItem title="Account" />
-        <SettingItem title="Upload" />
+        <SettingItem title="Music Visualization" />
         <SettingItem title="Basic settings" />
-        <SettingItem title="Social settings" />
-        <SettingItem title="Inbox" />
-        <SettingItem title="Notifications" />
-        <SettingItem title="Add widgets" />
-        <SettingItem title="Analytics" />
-        <SettingItem title="Communications" />
-        <SettingItem title="Advertising" />
+        <SettingItem 
+          title="Theme" 
+          onPress={() => setThemeModalVisible(true)}
+          rightElement={
+            <View style={styles.themeDisplayContainer}>
+              <Text style={[styles.themeDisplayText, { color: themeStyles.colors.secondary }]}>
+                {getThemeDisplayText()}
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color={themeStyles.colors.secondary} />
+            </View>
+          }
+        />
         <SettingItem title="Support" />
         <SettingItem title="Legal" />
         
@@ -78,6 +145,48 @@ export default function SettingsScreen({ setAuthenticated }: { setAuthenticated:
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Theme Selection Modal */}
+      <Modal
+        visible={themeModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setThemeModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: themeStyles.colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: themeStyles.colors.text }]}>
+                Choose Theme
+              </Text>
+              <TouchableOpacity onPress={() => setThemeModalVisible(false)}>
+                <Ionicons name="close" size={24} color={themeStyles.colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.themeOptionsContainer}>
+              <ThemeOption
+                mode="system"
+                label="System"
+                isSelected={themeMode === 'system'}
+                onSelect={handleThemeSelect}
+              />
+              <ThemeOption
+                mode="dark"
+                label="Dark"
+                isSelected={themeMode === 'dark'}
+                onSelect={handleThemeSelect}
+              />
+              <ThemeOption
+                mode="light"
+                label="Light"
+                isSelected={themeMode === 'light'}
+                onSelect={handleThemeSelect}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -116,16 +225,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    // Removed borderBottomWidth and borderBottomColor
   },
   settingItemText: {
     fontSize: 16,
     color: '#fff',
   },
+  themeDisplayContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  themeDisplayText: {
+    fontSize: 14,
+  },
   signOutContainer: {
     padding: 16,
     marginTop: 20,
-    marginBottom: 100, // Space for bottom tab navigator
+    marginBottom: 100,
     alignItems: 'center',
   },
   signOutButton: {
@@ -138,5 +254,51 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    borderRadius: 12,
+    padding: 20,
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  themeOptionsContainer: {
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  themeOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+  },
+  themeOptionContent: {
+    flex: 1,
+  },
+  themeOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  themeOptionSubtext: {
+    fontSize: 14,
+    marginTop: 2,
   },
 });

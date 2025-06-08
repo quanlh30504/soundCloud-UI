@@ -6,6 +6,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { searchApi, trackApi } from '../../services/api';
 import { RecommendKeyword, AcSuggestions, SongDataRecommend, SongData } from '../../types/zing';
 import trackPlayerService from '../../services/player/TrackPlayerService';
+import { useTheme } from '../../contexts/ThemeContext';
+import { darkTheme, lightTheme } from '../../config/theme';
 
 type NavigationProps = {
   navigate: (screen: string, params?: any) => void;
@@ -92,6 +94,8 @@ const genreData: Genre[] = [
 ];
 
 const SearchScreen: React.FC = () => {
+  const { theme } = useTheme();
+  const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
   const navigation = useNavigation<NavigationProps>();
   const [searchQuery, setSearchQuery] = useState('');
   const [recommendKeywords, setRecommendKeywords] = useState<RecommendKeyword[]>([]);
@@ -229,14 +233,14 @@ const SearchScreen: React.FC = () => {
   );
 
   const renderSuggestionsOverlay = () => {
-    if (!showSuggestions || (!acSuggestions && searchQuery.trim())) return null;
-
+    if (!showSuggestions || (!acSuggestions && searchQuery.trim())) 
+      return null;    
     return (
-      <View style={styles.suggestionsOverlay}>
-        {isLoadingSuggestions ? (
+      <View style={[styles.suggestionsOverlay, { backgroundColor: themeStyles.colors.background }]}>        
+      {isLoadingSuggestions ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#FF5722" />
-            <Text style={styles.loadingText}>Searching...</Text>
+            <ActivityIndicator size="small" color={themeStyles.colors.primary} />
+            <Text style={[styles.loadingText, { color: themeStyles.colors.text }]}>Searching...</Text>
           </View>
         ) : (
           acSuggestions && (
@@ -247,7 +251,7 @@ const SearchScreen: React.FC = () => {
             {/* Keywords Section */}
               {acSuggestions.items?.[0]?.keywords && (
                 <View style={styles.suggestionsSection}>
-                  <Text style={styles.suggestionsSectionTitle}>Search suggestions</Text>
+                  <Text style={[styles.suggestionsSectionTitle, { color: themeStyles.colors.text }]}>Search suggestions</Text>
                   {acSuggestions.items[0].keywords.map((keyword, index) => (
                     <TouchableOpacity
                       key={`keyword-${index}`}
@@ -255,9 +259,9 @@ const SearchScreen: React.FC = () => {
                       onPress={() => handleKeywordPress(keyword.keyword)}
                     >
                       <View style={styles.suggestionKeywordIcon}>
-                        <Icon name="search" size={16} color="#888" />
+                        <Icon name="search" size={16} color={themeStyles.colors.secondary} />
                       </View>
-                      <Text style={styles.suggestionKeywordText}>{keyword.keyword}</Text>
+                      <Text style={[styles.suggestionKeywordText, { color: themeStyles.colors.text }]}>{keyword.keyword}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -265,7 +269,7 @@ const SearchScreen: React.FC = () => {
               {/* Tracks Section */}
               {acSuggestions.items?.[1]?.suggestions && (
                 <View style={styles.suggestionsSection}>
-                  <Text style={styles.suggestionsSectionTitle}>Songs</Text>
+                  <Text style={[styles.suggestionsSectionTitle, { color: themeStyles.colors.text }]}>Songs</Text>
                   {acSuggestions.items[1].suggestions.slice(0, 5).map((track, index) => (
                     <TouchableOpacity
                       key={`track-${index}`}
@@ -275,12 +279,12 @@ const SearchScreen: React.FC = () => {
                       <Image 
                         source={{ uri: track.thumb || 'https://fakeimg.pl/40x40' }}
                         style={styles.suggestionTrackThumbnail}
-                      />
+                      />                      
                       <View style={styles.suggestionTrackInfo}>
-                        <Text style={styles.suggestionTrackTitle} numberOfLines={1}>
+                        <Text style={[styles.suggestionTrackTitle, { color: themeStyles.colors.text }]} numberOfLines={1}>
                           {track.title}
                         </Text>                        
-                        <Text style={styles.suggestionTrackArtist} numberOfLines={1}>
+                        <Text style={[styles.suggestionTrackArtist, { color: themeStyles.colors.secondary }]} numberOfLines={1}>
                           {track.artists?.[0]?.name || 'Unknown Artist'}
                         </Text>
                       </View>
@@ -325,42 +329,40 @@ const SearchScreen: React.FC = () => {
       </LinearGradient>
     </TouchableOpacity>
   );
-
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+    <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>
+      <StatusBar barStyle={theme === 'dark' ? "light-content" : "dark-content"} backgroundColor={themeStyles.colors.background} />
       
       {/* Search header */}
       <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Icon name="search" size={20} color="#777" />
+        <View style={[styles.searchBar, { backgroundColor: themeStyles.colors.card, borderColor: themeStyles.colors.border }]}>
+          <Icon name="search" size={20} color={themeStyles.colors.secondary} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: themeStyles.colors.text }]}
             placeholder="Search for songs, artists, or albums..."
-            placeholderTextColor="#777"
+            placeholderTextColor={themeStyles.colors.secondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             returnKeyType="search"
             onSubmitEditing={handleSearch}
           />
-          {searchQuery.length > 0 && (
+          {searchQuery.length > 0 && (            
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Icon name="close-circle" size={18} color="#777" />
+              <Icon name="close-circle" size={18} color={themeStyles.colors.secondary} />
             </TouchableOpacity>
           )}
         </View>
-          <TouchableOpacity style={styles.castButton}>
+          {/* <TouchableOpacity style={styles.castButton}>
           <Icon name="tv-outline" size={22} color="#fff" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* Suggestions overlay */}
-      {renderSuggestionsOverlay()}
-
+      {renderSuggestionsOverlay()}      
       {/* Recommended Keywords */}
       {!showSuggestions && recommendKeywords.length > 0 && (
         <View style={styles.recentSearchesContainer}>
-          <Text style={styles.sectionTitle}>Trending Searches</Text>
+          <Text style={[styles.sectionTitle, { color: themeStyles.colors.text }]}>Trending Searches</Text>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -369,21 +371,20 @@ const SearchScreen: React.FC = () => {
             {recommendKeywords.slice(0, 10).map((item, index) => (
               <TouchableOpacity
                 key={`keyword-${index}`}
-                style={styles.recentSearchItem}
+                style={[styles.recentSearchItem, { backgroundColor: themeStyles.colors.card }]}
                 onPress={() => handleKeywordPress(item.keyword)}
               >
                 <View style={styles.recentSearchIcon}>
-                  <Icon name="trending-up" size={18} color="#FF5722" />
+                  <Icon name="trending-up" size={18} color={themeStyles.colors.primary} />
                 </View>
-                <Text style={styles.recentSearchText}>{item.keyword}</Text>
+                <Text style={[styles.recentSearchText, { color: themeStyles.colors.text }]}>{item.keyword}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
-      )}
-
+      )}      
       {/* Title */}
-      {!showSuggestions && <Text style={styles.title}>Vibes</Text>}      
+      {!showSuggestions && <Text style={[styles.title, { color: themeStyles.colors.text }]}>Vibes</Text>}
       {/* Genre Grid */}
       {!showSuggestions && (
         <ScrollView 

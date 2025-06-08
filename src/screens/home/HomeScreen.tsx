@@ -12,8 +12,6 @@ import NavigationService from "services/navigation/NavigationService";
 export default function HomeScreen({ navigation }: any) {
   const { theme } = useTheme();
   const themeStyles = theme === "dark" ? darkTheme : lightTheme;
-
-  const backgroundColor = "#121212";
   const [newReleasesSongs, setNewReleasesSongs] = useState([]);
   const [newReleasesAlbums, setNewReleasesAlbums] = useState([]);
   const [recommendedSongs, setRecommendedSongs] = useState([]);
@@ -98,25 +96,25 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
-      {/* Header */}
+    <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>      
+    {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Home</Text>
+        <Text style={[styles.headerTitle, { color: themeStyles.colors.text }]}>Home</Text>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.iconButton}>
-            <Icon name="radio-outline" size={22} color="#ffffff" />
+            <Icon name="radio-outline" size={22} color={themeStyles.colors.icon} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
-            <Icon name="time-outline" size={22} color="#ffffff" />
+            <Icon name="time-outline" size={22} color={themeStyles.colors.icon} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
-            <Icon name="mail-outline" size={22} color="#ffffff" />
+            <Icon name="mail-outline" size={22} color={themeStyles.colors.icon} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
-            <Icon name="notifications-outline" size={22} color="#ffffff" />
+            <Icon name="notifications-outline" size={22} color={themeStyles.colors.icon} />
           </TouchableOpacity>
         </View>
-      </View>      
+      </View>
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -156,7 +154,7 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* New Releases Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>New releases</Text>
+          <Text style={[styles.sectionTitle, { color: themeStyles.colors.text }]}>New releases</Text>
           <NewReleasesSection
             songReleases={newReleasesSongs}
             albumReleases={newReleasesAlbums}
@@ -170,12 +168,12 @@ export default function HomeScreen({ navigation }: any) {
         {/* Chill Section */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Text style={styles.sectionTitle}>Chill</Text>
+            <Text style={[styles.sectionTitle, { color: themeStyles.colors.text }]}>Chill</Text>
             <TouchableOpacity 
               onPress={() => navigation.navigate('Chill', { hubId: hubData?.encodeId })}
               style={styles.seeMoreButton}
             >
-              <Icon name="chevron-forward" size={20} color="#ffffff" />
+              <Icon name="chevron-forward" size={20} color={themeStyles.colors.icon} />
             </TouchableOpacity>
           </View>
           
@@ -213,7 +211,7 @@ export default function HomeScreen({ navigation }: any) {
                 onPress={() => navigation.navigate('Chill', { hubId: hubData?.encodeId })}
               >
                 <View style={styles.seeAllCircle}>
-                  <Icon name="chevron-forward" size={24} color="#ffffff" />
+                  <Icon name="chevron-forward" size={24} color={themeStyles.colors.icon} />
                 </View>
                 <Text style={styles.seeAllText}>Xem tất cả</Text>
               </TouchableOpacity>
@@ -223,7 +221,7 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* Top 100 Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Top 100</Text>
+          <Text style={[styles.sectionTitle, { color: themeStyles.colors.text }]}>Top 100</Text>
           
           {isLoading ? (
             <ActivityIndicator color="#ff5500" size="small" />

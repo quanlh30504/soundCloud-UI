@@ -7,23 +7,29 @@ import { SongData, Artist, Album,
   ChartHomeData, ChartItemInfo, WeekChartInfo, RecommendKeyword, AcSuggestions } from '../types/zing';
 import { HistoryPage, ListeningHistoryDTO } from '../types/history';
 import { storageService } from '../services/storage';
+import { updateProfile } from 'firebase/auth';
+
+type UpdateProfile = {
+  displayName?: string;
+  avatarUrl?: string;
+}
 
 // User API
 export const userApi = {
   // Lấy thông tin user
-  getProfile: () => axiosInstance.get('/users/profile'),
+  getProfile: () => axiosInstance.get<User>('/users/me'),
   
   // Cập nhật thông tin user
-  updateProfile: (data: any) => axiosInstance.put('/users/profile', data),
+  updateProfile: (data: UpdateProfile) => axiosInstance.put<User>('/users/profile', data),
   
-  // Lấy danh sách bài hát đã thích
-  getLikedTracks: () => axiosInstance.get('/users/liked-tracks'),
+  // // Lấy danh sách bài hát đã thích
+  // getLikedTracks: () => axiosInstance.get('/users/liked-tracks'),
   
-  // Lấy danh sách playlist
-  getPlaylists: () => axiosInstance.get('/users/playlists'),
+  // // Lấy danh sách playlist
+  // getPlaylists: () => axiosInstance.get('/users/playlists'),
   
-  // Lấy danh sách người theo dõi
-  getFollowing: () => axiosInstance.get('/users/following'),
+  // // Lấy danh sách người theo dõi
+  // getFollowing: () => axiosInstance.get('/users/following'),
 };
 
 // Playlist API

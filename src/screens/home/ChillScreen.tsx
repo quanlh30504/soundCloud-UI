@@ -45,7 +45,6 @@ interface ChillData {
 export default function ChillScreen({ navigation, route }: any) {
   const { theme } = useTheme();
   const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
-  const backgroundColor = '#121212';
 
   const [chillData, setChillData] = useState<ChillData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,12 +85,12 @@ export default function ChillScreen({ navigation, route }: any) {
       <Image
         source={{ uri: item.thumbnailM || item.thumbnail }}
         style={styles.chillCover}
-      />
+      />      
       <View style={styles.chillInfo}>
-        <Text style={styles.chillTitle} numberOfLines={2}>
+        <Text style={[styles.chillTitle, { color: themeStyles.colors.text }]} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.chillDescription} numberOfLines={1}>
+        <Text style={[styles.chillDescription, { color: themeStyles.colors.secondary }]} numberOfLines={1}>
           {item.sortDescription || item.artistsNames || item.textType || 'Playlist'}
         </Text>
       </View>
@@ -108,11 +107,10 @@ export default function ChillScreen({ navigation, route }: any) {
 
     if (validItems.length === 0) {
       return null;
-    }
-
+    }    
     return (
       <View key={`section-${sectionIndex}`} style={styles.section}>
-        <Text style={styles.sectionTitle}>{section.title}</Text>
+        <Text style={[styles.sectionTitle, { color: themeStyles.colors.text }]}>{section.title}</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -124,69 +122,66 @@ export default function ChillScreen({ navigation, route }: any) {
       </View>
     );
   };
-
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Icon name="chevron-back" size={24} color="#ffffff" />
+            <Icon name="chevron-back" size={24} color={themeStyles.colors.icon} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chill</Text>
+          <Text style={[styles.headerTitle, { color: themeStyles.colors.text }]}>Chill</Text>
           <View style={styles.headerRight} />
-        </View>
+        </View>        
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#ff5500" />
-          <Text style={styles.loadingText}>Đang tải...</Text>
+          <ActivityIndicator size="large" color={themeStyles.colors.primary} />
+          <Text style={[styles.loadingText, { color: themeStyles.colors.text }]}>Đang tải...</Text>
         </View>
       </SafeAreaView>
     );
   }
-
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Icon name="chevron-back" size={24} color="#ffffff" />
+            <Icon name="chevron-back" size={24} color={themeStyles.colors.icon} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chill</Text>
+          <Text style={[styles.headerTitle, { color: themeStyles.colors.text }]}>Chill</Text>
           <View style={styles.headerRight} />
         </View>
         <View style={styles.centerContainer}>
-          <Icon name="alert-circle-outline" size={48} color="#ff5500" />
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchChillData}>
-            <Text style={styles.retryButtonText}>Thử lại</Text>
+          <Icon name="alert-circle-outline" size={48} color={themeStyles.colors.primary} />
+          <Text style={[styles.errorText, { color: themeStyles.colors.text }]}>{error}</Text>
+          <TouchableOpacity style={[styles.retryButton, { backgroundColor: themeStyles.colors.primary }]} onPress={fetchChillData}>
+            <Text style={[styles.retryButtonText, { color: '#ffffff' }]}>Thử lại</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
-
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Icon name="chevron-back" size={24} color="#ffffff" />
+          <Icon name="chevron-back" size={24} color={themeStyles.colors.icon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chill</Text>
+        <Text style={[styles.headerTitle, { color: themeStyles.colors.text }]}>Chill</Text>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.iconButton}>
-            <Icon name="search-outline" size={22} color="#ffffff" />
+            <Icon name="search-outline" size={22} color={themeStyles.colors.icon} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
-            <Icon name="ellipsis-vertical" size={22} color="#ffffff" />
+            <Icon name="ellipsis-vertical" size={22} color={themeStyles.colors.icon} />
           </TouchableOpacity>
         </View>
       </View>
@@ -195,13 +190,13 @@ export default function ChillScreen({ navigation, route }: any) {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-      >
-        {/* Header Info */}
+      >        
+      {/* Header Info */}
         {chillData && (
           <View style={styles.headerInfo}>
-            <Text style={styles.mainTitle}>{chillData.title}</Text>
+            <Text style={[styles.mainTitle, { color: themeStyles.colors.text }]}>{chillData.title}</Text>
             {chillData.description && (
-              <Text style={styles.description}>{chillData.description}</Text>
+              <Text style={[styles.description, { color: themeStyles.colors.secondary }]}>{chillData.description}</Text>
             )}
           </View>
         )}

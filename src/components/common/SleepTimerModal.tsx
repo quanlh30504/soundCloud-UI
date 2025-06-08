@@ -227,8 +227,8 @@ const SleepTimerModal: React.FC<SleepTimerModalProps> = ({
                 <TouchableOpacity
                   style={[styles.setButton, { backgroundColor: themeStyles.primary }]}
                   onPress={handleSetTimer}
-                >
-                  <Text style={[styles.setButtonText, { color: '#FFFFFF' }]}>
+                >                  
+                <Text style={[styles.setButtonText, { color: themeStyles.background }]}>
                     Set Timer
                   </Text>
                 </TouchableOpacity>

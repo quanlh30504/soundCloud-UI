@@ -4,6 +4,7 @@ import Slider from "@react-native-community/slider";
 import TrackPlayer, { useProgress, useTrackPlayerEvents, usePlaybackState, Event, Track } from "react-native-track-player";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../../contexts/ThemeContext";
+import { lightTheme, darkTheme } from "../../config/theme";
 import trackPlayerService, { TrackInfo } from "../../services/player/TrackPlayerService";
 import MoreOptionsMenu from "../../components/common/MoreOptionsMenu";
 import SleepTimerModal from "../../components/common/SleepTimerModal";
@@ -19,12 +20,7 @@ import NavigationService from "../../services/navigation/NavigationService";
 
 const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}) => {
   const { theme } = useTheme();
-  const themeStyles = {
-    background: "#121212",
-    primary: "#FF5500",
-    text: "#FFFFFF",
-    secondary: "#AAAAAA",
-  };
+  const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
     const [trackInfo, setTrackInfo] = useState<TrackInfo>({id: "", title: "", artist: "", artwork: null });
   const [isPlaying, setIsPlaying] = useState(false);
   // const [repeatMode, setRepeatMode] = useState(0);
@@ -252,32 +248,31 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
-
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>
       <StatusBar barStyle={theme === "dark" ? "light-content" : "dark-content"} />
       
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
-          <Icon name="chevron-down" size={28} color={themeStyles.text} />
+          <Icon name="chevron-down" size={28} color={themeStyles.colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerText, { color: isPlaying ? themeStyles.primary : themeStyles.text }]}>
+        <Text style={[styles.headerText, { color: isPlaying ? themeStyles.colors.primary : themeStyles.colors.text }]}>
           {isPlaying ? "PLAYING" : "PAUSED"}
         </Text>
         <TouchableOpacity 
           style={styles.headerButton}
           onPress={handleOpenMoreOptions}
         >
-          <Icon name="ellipsis-horizontal" size={28} color={themeStyles.text} />
+          <Icon name="ellipsis-horizontal" size={28} color={themeStyles.colors.text} />
         </TouchableOpacity>
       </View>
       
       {/* Track Info */}
       <View style={styles.trackInfoContainer}>
         {trackInfo.artwork && <Image source={{uri: trackInfo.artwork}} style={styles.thumbnail} />}
-        <Text style={[styles.trackTitle, { color: themeStyles.text }]}>{trackInfo.title}</Text>
-        <Text style={[styles.artistName, { color: themeStyles.secondary }]}>{trackInfo.artist}</Text>
+        <Text style={[styles.trackTitle, { color: themeStyles.colors.text }]}>{trackInfo.title}</Text>
+        <Text style={[styles.artistName, { color: themeStyles.colors.secondary }]}>{trackInfo.artist}</Text>
       </View>
       
       {/* Audio Visualizer */}
@@ -289,22 +284,22 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
       />
       
       {/* Progress Bar */}
-      <View style={styles.progressContainer}>
+      <View style={styles.progressContainer}>        
         <Slider
           style={styles.progressBar}
           minimumValue={0}
           maximumValue={progress.duration || 100}
           value={progress.position || 0}
-          minimumTrackTintColor={themeStyles.primary}
-          maximumTrackTintColor="#333333"
-          thumbTintColor={themeStyles.primary}
+          minimumTrackTintColor={themeStyles.colors.primary}
+          maximumTrackTintColor={themeStyles.colors.border}
+          thumbTintColor={themeStyles.colors.primary}
           onSlidingComplete={handleSeek}
         />
         <View style={styles.timeContainer}>
-          <Text style={[styles.timeText, { color: themeStyles.secondary }]}>
+          <Text style={[styles.timeText, { color: themeStyles.colors.secondary }]}>
             {formatTime(progress.position)}
           </Text>
-          <Text style={[styles.timeText, { color: themeStyles.secondary }]}>
+          <Text style={[styles.timeText, { color: themeStyles.colors.secondary }]}>
             {formatTime(progress.duration)}
           </Text>
         </View>
@@ -313,11 +308,11 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
       {/* Controls */}
       <View style={styles.controlsContainer}>
         <TouchableOpacity onPress={toggleRepeatMode} style={styles.sideControl}>
-          <Icon name="repeat" size={24} color={isRepeating ? themeStyles.primary : themeStyles.secondary} />
+          <Icon name="repeat" size={24} color={isRepeating ? themeStyles.colors.primary : themeStyles.colors.secondary} />
         </TouchableOpacity>
         
         <TouchableOpacity onPress={handlePrevious} style={styles.mainControl}>
-          <Icon name="play-back" size={28} color={themeStyles.text} />
+          <Icon name="play-back" size={28} color={themeStyles.colors.text} />
         </TouchableOpacity>
         
         <TouchableOpacity onPress={handlePlayPause} style={styles.playButton}>
@@ -330,41 +325,40 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
         </TouchableOpacity>
         
         <TouchableOpacity onPress={handleNext} style={styles.mainControl}>
-          <Icon name="play-forward" size={28} color={themeStyles.text} />
+          <Icon name="play-forward" size={28} color={themeStyles.colors.text} />
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.sideControl} onPress={handleShufflePress}>
           {/* Assuming shuffle is a boolean state */}
-          <Icon name="shuffle" size={24} color={themeStyles.secondary} />
+          <Icon name="shuffle" size={24} color={themeStyles.colors.secondary} />
         </TouchableOpacity>
       </View>
 
       {/* Fill space - removed the embedded LyricsComponent */}
       <View style={{ flex: 1 }} />
-      
-      {/* Additional Controls Bar */}
-      <View style={styles.additionalControlsBar}>
-        <TouchableOpacity style={styles.additionalButton}>
+        {/* Additional Controls Bar */}
+      <View style={[styles.additionalControlsBar, { backgroundColor: themeStyles.colors.background, borderTopColor: themeStyles.colors.border }]}>
+        <TouchableOpacity style={styles.additionalButton} onPress={handleLikeToggle}>
           <Icon name={isLiked ? 'heart' : 'heart-outline'}
             size={24}
-            color={isLiked ? themeStyles.primary : themeStyles.secondary}
-            onPress={handleLikeToggle}
+            color={isLiked ? themeStyles.colors.primary : themeStyles.colors.secondary}
           />
         </TouchableOpacity>
-          <TouchableOpacity style={styles.additionalButton} onPress={handleOpenSleepTimer}>
+        
+        <TouchableOpacity style={styles.additionalButton} onPress={handleOpenSleepTimer}>
           <Icon name="time-outline" size={24}
-            color={isSleepTimerActive ? themeStyles.primary : themeStyles.secondary}
+            color={isSleepTimerActive ? themeStyles.colors.primary : themeStyles.colors.secondary}
           />
         </TouchableOpacity>
         
         <View style={styles.additionalButtonSpacer} />
         
         <TouchableOpacity style={styles.additionalButton} onPress={handleOpenLyrics}>
-          <Icon name="musical-notes" size={24} color={themeStyles.secondary} />
+          <Icon name="musical-notes" size={24} color={themeStyles.colors.secondary} />
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.additionalButton} onPress={handleOpenQueue}>
-          <Icon name="list-outline" size={24} color={themeStyles.secondary} />
+          <Icon name="list-outline" size={24} color={themeStyles.colors.secondary} />
         </TouchableOpacity>
       </View>
 
@@ -407,20 +401,20 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
       <QueueScreen 
         visible={queueScreenVisible}
         onClose={handleCloseQueue}
-      />
-        {/* Lyrics Screen */}
+      />      
+      {/* Lyrics Screen */}
       <LyricsScreen
         visible={lyricsScreenVisible}
         onClose={handleCloseLyrics}
         trackId={currentTrackId}
         onLyricPress={handleSeek}
-        themeStyles={themeStyles}
+        themeStyles={themeStyles.colors}
       />      
       {/* Sleep Timer Modal */}
       <SleepTimerModal
         visible={sleepTimerModalVisible}
         onClose={handleCloseSleepTimer}
-        themeStyles={themeStyles}
+        themeStyles={themeStyles.colors}
       />
 
       {/* Song Info Modal */}
@@ -428,7 +422,7 @@ const MusicPlayerScreen = ({ navigation, route}: { navigation: any , route: any}
         visible={songInfoModalVisible}
         onClose={handleCloseSongInfo}
         songData={currentSongData}
-        themeStyles={themeStyles}
+        themeStyles={themeStyles.colors}
       />
     </SafeAreaView>
   );
@@ -505,7 +499,7 @@ const styles = StyleSheet.create({
   },
   mainControl: {
     padding: 10
-  },
+  },  
   playButton: { 
     width: 50, 
     height: 50, 
@@ -521,12 +515,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderTopWidth: 0.5,
-    borderTopColor: '#333333',
-    position: 'absolute', // Changed to absolute positioning
-    bottom: 0,           // Position at the bottom
+    position: 'absolute',
+    bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#121212', // Match background so it doesn't look out of place
   },
   additionalButton: {
     padding: 10,

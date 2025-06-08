@@ -19,6 +19,8 @@ import trackPlayerService from '../../services/player/TrackPlayerService';
 import MoreOptionsMenu from '../../components/common/MoreOptionsMenu';
 import {RepeatMode, State} from 'react-native-track-player';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useTheme } from '../../contexts/ThemeContext';
+import { lightTheme, darkTheme } from '../../config/theme';
 interface QueueData {
   beforeActive: Track[];
   active: Track | null;
@@ -31,6 +33,9 @@ interface QueueScreenProps {
 }
 
 const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
+  const { theme } = useTheme();
+  const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
+  
   const [queueData, setQueueData] = useState<QueueData>({ beforeActive: [], active: null, afterActive: [] });
   const [loading, setLoading] = useState(false);
   const [isTrackOptionsVisible, setIsTrackOptionsVisible] = useState(false);
@@ -146,20 +151,20 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
       <Image
         source={{ uri: item.artwork ? String(item.artwork) : 'https://fakeimg.pl/60x60' }}
         style={styles.trackThumbnail}
-      />
+      />        
       <View style={styles.trackInfo}>
-        <Text style={[styles.trackName, styles.dimmedText]} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <Text style={[styles.artistName, styles.dimmedText]} numberOfLines={1}>
-          {item.artist}
-        </Text>
-      </View>
-      <TouchableOpacity
+          <Text style={[styles.trackName, { color: themeStyles.colors.secondary }]} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <Text style={[styles.artistName, { color: themeStyles.colors.secondary }]} numberOfLines={1}>
+            {item.artist}
+          </Text>
+        </View>
+        <TouchableOpacity
         style={styles.moreButton}
         onPress={() => handleTrackOptionsPress(item)}
       >
-        <Ionicons name="ellipsis-vertical" size={20} color="#777777" />
+        <Ionicons name="ellipsis-vertical" size={20} color={themeStyles.colors.secondary} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -174,12 +179,12 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
         <Image
           source={{ uri: track.artwork ? String(track.artwork) : 'https://fakeimg.pl/60x60' }}
           style={styles.trackThumbnail}
-        />
+        />        
         <View style={styles.trackInfo}>
-          <Text style={styles.trackName} numberOfLines={1}>
+          <Text style={[styles.trackName, { color: themeStyles.colors.text }]} numberOfLines={1}>
             {track.title}
           </Text>
-          <Text style={isPlayingActiveTrack ? styles.nowPlayingText : styles.pausedText} numberOfLines={1}>
+          <Text style={[isPlayingActiveTrack ? { color: themeStyles.colors.primary } : { color: themeStyles.colors.secondary }]} numberOfLines={1}>
             {isPlayingActiveTrack ? 'Now Playing' : 'Paused'}
           </Text>
         </View>
@@ -187,27 +192,27 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
           style={styles.moreButton}
           onPress={() => handleTrackOptionsPress(track)}
         >
-          <Ionicons name="ellipsis-vertical" size={20} color="#AAAAAA" />
+          <Ionicons name="ellipsis-vertical" size={20} color={themeStyles.colors.secondary} />
         </TouchableOpacity>
       </TouchableOpacity>
     );
   };
 
   const renderAfterActiveTrackItem = ({ item, drag, isActive }: RenderItemParams<Track>) => (
-    <ScaleDecorator>
+    <ScaleDecorator>        
       <TouchableOpacity
-        style={[styles.trackItem, isActive && styles.activeTrackItem]}
-        onPress={() => handlePlayTrack(item.id?.toString() || '')}
-      >
+          style={[styles.trackItem, isActive && { backgroundColor: themeStyles.colors.card }]}
+          onPress={() => handlePlayTrack(item.id?.toString() || '')}
+        >
         <Image
           source={{ uri: item.artwork ? String(item.artwork) : 'https://fakeimg.pl/60x60' }}
           style={styles.trackThumbnail}
-        />
+        />        
         <View style={styles.trackInfo}>
-          <Text style={styles.trackName} numberOfLines={1}>
+          <Text style={[styles.trackName, { color: themeStyles.colors.text }]} numberOfLines={1}>
             {item.title}
           </Text>
-          <Text style={styles.artistName} numberOfLines={1}>
+          <Text style={[styles.artistName, { color: themeStyles.colors.secondary }]} numberOfLines={1}>
             {item.artist}
           </Text>
         </View>
@@ -215,7 +220,7 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
           style={styles.dragHandle}
           onPressIn={drag}
         >
-          <Ionicons name="reorder-three" size={24} color="#AAAAAA" />
+          <Ionicons name="reorder-three" size={24} color={themeStyles.colors.secondary} />
         </TouchableOpacity>
       </TouchableOpacity>
     </ScaleDecorator>
@@ -224,17 +229,17 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
 
   const renderContent = () => {
     if (loading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF5500" />
+      return (        
+      <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={themeStyles.colors.primary} />
         </View>
       );
     }
 
     if (queueData.beforeActive.length === 0 && !queueData.active && queueData.afterActive.length === 0) {
-      return (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No tracks in the queue</Text>
+      return (        
+      <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, { color: themeStyles.colors.secondary }]}>No tracks in the queue</Text>
         </View>
       );
     }
@@ -279,26 +284,26 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
       animationType="slide"
       transparent={false}
       onRequestClose={onClose}
-    >
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaView style={styles.container}>
+    >      
+    <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>
           {/* Header */}
-          <View style={styles.header}>
+          <View style={[styles.header, { borderBottomColor: themeStyles.colors.border }]}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <View style={styles.closeButtonCircle}>
-                <Ionicons name="close" size={20} color="#FFF" />
+              <View style={[styles.closeButtonCircle, { backgroundColor: themeStyles.colors.secondary }]}>
+                <Ionicons name="close" size={20} color={themeStyles.colors.background} />
               </View>
             </TouchableOpacity>
             
-            <Text style={styles.headerTitle}>Next up</Text>
+            <Text style={[styles.headerTitle, { color: themeStyles.colors.text }]}>Next up</Text>
             
             <View style={styles.headerRightButtons}>
               <TouchableOpacity style={styles.headerButton} onPress={handleShufflePress}>
-                <Ionicons name="shuffle" size={24} color="#FFFFFF" />
+                <Ionicons name="shuffle" size={24} color={themeStyles.colors.text} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.headerButton} onPress={toggleRepeatMode}>
                 <Ionicons name="repeat" size={24}
-                  color={isRepeating ? '#FF5500' : '#FFFFFF'}
+                  color={isRepeating ? themeStyles.colors.primary : themeStyles.colors.text}
                 />
               </TouchableOpacity>
             </View>
@@ -355,7 +360,6 @@ const QueueScreen: React.FC<QueueScreenProps> = ({ visible, onClose }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
   },
   header: {
     flexDirection: 'row',
@@ -364,7 +368,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: '#333',
   },
   closeButton: {
     padding: 4,
@@ -374,14 +377,12 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#666',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
   },
   headerRightButtons: {
     flexDirection: 'row',
@@ -402,13 +403,11 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#AAAAAA',
   },
   queueListContainer: {
     flex: 1,
   },
   afterActiveTracksContainer: {
-    // This makes the DraggableFlatList take up only the space it needs
     height: 'auto',
   },
   bottomPadding: {
@@ -416,9 +415,7 @@ const styles = StyleSheet.create({
   },
   dragPreview: {
     width: 300,
-    backgroundColor: '#333',
     borderRadius: 4,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -434,7 +431,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   activeTrackItem: {
-    backgroundColor: '#333333',
   },
   dimmedTrackItem: {
     opacity: 0.6,
@@ -451,23 +447,18 @@ const styles = StyleSheet.create({
   trackName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFFFFF',
     marginBottom: 4,
   },
   artistName: {
     fontSize: 14,
-    color: '#AAAAAA',
   },
   nowPlayingText: {
     fontSize: 14,
-    color: '#FF5500',
   },
   pausedText: {
     fontSize: 14,
-    color: '#AAAAAA',
   },
   dimmedText: {
-    color: '#999999',
   },
   moreButton: {
     padding: 8,

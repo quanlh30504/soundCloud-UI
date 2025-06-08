@@ -9,14 +9,18 @@ import { searchApi } from '../../services/api';
 import trackPlayerService from '../../services/player/TrackPlayerService';
 import { SongData, Album } from '../../types/zing';
 import NavigationService from 'services/navigation/NavigationService';
+import { useTheme } from '../../contexts/ThemeContext';
+import { lightTheme, darkTheme } from '../../config/theme';
 
 const TABS = ['All', 'Songs', 'Playlists', 'Artists'];
 
 const SearchResultsScreen = () => {
   const navigation = useNavigation();
   const { params = {} } = useRoute();
+  const { theme } = useTheme();
+  const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
   
-  const [query, setQuery] = useState(params.initialQuery || '');
+  const [query, setQuery] = useState((params as any).initialQuery || '');
   const [activeTab, setActiveTab] = useState('All');
   const [results, setResults] = useState({ songs: [], playlists: [], artists: [], top: null });
   const [isLoading, setIsLoading] = useState(false);
@@ -131,21 +135,21 @@ const SearchResultsScreen = () => {
       key={item.encodeId}
     >
       {item.thumbnail ? (
-        <Image source={{ uri: item.thumbnail }} style={styles.trackImage} resizeMode="conver" />
+        <Image source={{ uri: item.thumbnail }} style={styles.trackImage} resizeMode="cover" />      
       ) : (
-        <View style={[styles.trackImage, styles.placeholderImage]}>
-          <Icon name="musical-note" size={24} color="#555" />
+        <View style={[styles.trackImage, styles.placeholderImage, { backgroundColor: themeStyles.colors.card }]}>
+          <Icon name="musical-note" size={24} color={themeStyles.colors.icon} />
         </View>
       )}
       
       <View style={styles.trackInfo}>
-        <Text style={styles.trackTitle} numberOfLines={1}>{item.title}</Text>
-        <Text style={styles.trackArtist} numberOfLines={1}>
+        <Text style={[styles.trackTitle, { color: themeStyles.colors.text }]} numberOfLines={1}>{item.title}</Text>
+        <Text style={[styles.trackArtist, { color: themeStyles.colors.secondary }]} numberOfLines={1}>
           {item.artistsNames || 'Unknown Artist'}
         </Text>
       </View>
       
-      <Text style={styles.trackDuration}>{formatDuration(item.duration * 1000)}</Text>
+      <Text style={[styles.trackDuration, { color: themeStyles.colors.secondary }]}>{formatDuration(item.duration * 1000)}</Text>
     </TouchableOpacity>
   );
   
@@ -156,16 +160,16 @@ const SearchResultsScreen = () => {
       key={item.encodeId}
     >
       {item.thumbnail ? (
-        <Image source={{ uri: item.thumbnail }} style={styles.playlistImage} resizeMode="cover" />
+        <Image source={{ uri: item.thumbnail }} style={styles.playlistImage} resizeMode="cover" />      
       ) : (
-        <View style={[styles.albumImage, styles.placeholderImage]}>
-          <Icon name="disc" size={32} color="#555" />
+        <View style={[styles.albumImage, styles.placeholderImage, { backgroundColor: themeStyles.colors.card }]}>
+          <Icon name="disc" size={32} color={themeStyles.colors.icon} />
         </View>
       )}
       
       <View style={styles.playlistInfo}>
-        <Text style={styles.playlistTitle} numberOfLines={1}>{item.title}</Text>
-        <Text style={styles.playlistDesc} numberOfLines={1}>
+        <Text style={[styles.playlistTitle, { color: themeStyles.colors.text }]} numberOfLines={1}>{item.title}</Text>
+        <Text style={[styles.playlistDesc, { color: themeStyles.colors.secondary }]} numberOfLines={1}>
           {item.artistsNames}
         </Text>
       </View>
@@ -179,13 +183,13 @@ const SearchResultsScreen = () => {
       onPress={() => NavigationService.navigateToArtist(item.alias)}
       key={item.id}>
         {item.thumbnail ? (
-          <Image source={{ uri: item.thumbnail }} style={styles.artistImage} resizeMode="cover" />  
+          <Image source={{ uri: item.thumbnail }} style={styles.artistImage} resizeMode="cover" />        
         ) : (
-          <View style={[styles.artistImage, styles.placeholderImage]}>
-            <Icon name="person" size={32} color="#555" />
+          <View style={[styles.artistImage, styles.placeholderImage, { backgroundColor: themeStyles.colors.card }]}>
+            <Icon name="person" size={32} color={themeStyles.colors.icon} />
           </View>
         )}
-        <Text style={styles.artistName} numberOfLines={1}>{item.name}</Text>
+        <Text style={[styles.artistName, { color: themeStyles.colors.text }]} numberOfLines={1}>{item.name}</Text>
     </TouchableOpacity>
   )
 
@@ -200,11 +204,11 @@ const SearchResultsScreen = () => {
     }
   };
   
-  const renderContent = () => {
+  const renderContent = () => {    
     if (isLoading && !results.songs.length && !results.playlists.length && !results.artists.length) {
         return (
         <View style={styles.centeredContainer}>
-          <ActivityIndicator size="large" color="#1DB954" />
+          <ActivityIndicator size="large" color={themeStyles.colors.primary} />
         </View>
       );
     }
@@ -212,8 +216,8 @@ const SearchResultsScreen = () => {
     if (error) {
       return (
         <View style={styles.centeredContainer}>
-          <Icon name="alert-circle-outline" size={48} color="#777" />
-          <Text style={styles.messageText}>{error}</Text>
+          <Icon name="alert-circle-outline" size={48} color={themeStyles.colors.secondary} />
+          <Text style={[styles.messageText, { color: themeStyles.colors.secondary }]}>{error}</Text>
         </View>
       );
     }
@@ -221,8 +225,8 @@ const SearchResultsScreen = () => {
     if (!query.trim()) {
       return (
         <View style={styles.centeredContainer}>
-          <Icon name="search" size={48} color="#777" />
-          <Text style={styles.messageText}>Type something to search</Text>
+          <Icon name="search" size={48} color={themeStyles.colors.secondary} />
+          <Text style={[styles.messageText, { color: themeStyles.colors.secondary }]}>Type something to search</Text>
         </View>
       );
     }
@@ -233,12 +237,11 @@ const SearchResultsScreen = () => {
     (activeTab === 'Playlists' && !results.playlists.length) ||
     (activeTab === 'Artists' && !results.artists.length)
   );
-    
-    if (noResults && !isLoading) {
+      if (noResults && !isLoading) {
       return (
         <View style={styles.centeredContainer}>
-          <Icon name="search" size={48} color="#777" />
-          <Text style={styles.messageText}>No results found for "{query}"</Text>
+          <Icon name="search" size={48} color={themeStyles.colors.secondary} />
+          <Text style={[styles.messageText, { color: themeStyles.colors.secondary }]}>No results found for "{query}"</Text>
         </View>
       );
     }
@@ -255,13 +258,13 @@ const SearchResultsScreen = () => {
           )} */}
 
           {/* Song results */}
-          {(activeTab === 'All' || activeTab === 'Songs') && results.songs.length > 0 && (
+          {(activeTab === 'All' || activeTab === 'Songs') && results.songs.length > 0 && (            
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Songs</Text>
+                <Text style={[styles.sectionTitle, { color: themeStyles.colors.text }]}>Songs</Text>
                 {activeTab === 'All' && results.songs.length > 3 && (
                   <TouchableOpacity onPress={() => handleTabChange('Songs')}>
-                    <Text style={styles.seeAllText}>See all</Text>
+                    <Text style={[styles.seeAllText, { color: themeStyles.colors.primary }]}>See all</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -274,13 +277,13 @@ const SearchResultsScreen = () => {
           )}
           
           {/* Playlists */}
-          {(activeTab === 'All' || activeTab === 'Playlists') && results.playlists.length > 0 && (
+          {(activeTab === 'All' || activeTab === 'Playlists') && results.playlists.length > 0 && (            
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Playlists</Text>
+                <Text style={[styles.sectionTitle, { color: themeStyles.colors.text }]}>Playlists</Text>
                 {activeTab === 'All' && results.playlists.length > 3 && (
                   <TouchableOpacity onPress={() => handleTabChange('Playlists')}>
-                    <Text style={styles.seeAllText}>See all</Text>
+                    <Text style={[styles.seeAllText, { color: themeStyles.colors.primary }]}>See all</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -293,13 +296,13 @@ const SearchResultsScreen = () => {
           )}
 
           {/* Artists */}
-          {(activeTab === 'All' || activeTab === 'Artists') && results.artists.length > 0 && (
+          {(activeTab === 'All' || activeTab === 'Artists') && results.artists.length > 0 && (            
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Artists</Text>
+                <Text style={[styles.sectionTitle, { color: themeStyles.colors.text }]}>Artists</Text>
                 {activeTab === 'All' && results.artists.length > 3 && (
                   <TouchableOpacity onPress={() => handleTabChange('Artists')}>
-                    <Text style={styles.seeAllText}>See all</Text>
+                    <Text style={[styles.seeAllText, { color: themeStyles.colors.primary }]}>See all</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -318,23 +321,25 @@ const SearchResultsScreen = () => {
       </ScrollView>
     );
   };
-  
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+    return (
+    <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>
+      <StatusBar 
+        barStyle={theme === 'dark' ? "light-content" : "dark-content"} 
+        backgroundColor={themeStyles.colors.background} 
+      />
       
       {/* Search bar */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: themeStyles.colors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color="#fff" />
+          <Icon name="arrow-back" size={24} color={themeStyles.colors.text} />
         </TouchableOpacity>
         
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color="#777" style={{ marginRight: 8 }} />
+        <View style={[styles.searchContainer, { backgroundColor: themeStyles.colors.card }]}>
+          <Icon name="search" size={20} color={themeStyles.colors.secondary} style={{ marginRight: 8 }} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: themeStyles.colors.text }]}
             placeholder="Search..."
-            placeholderTextColor="#777"
+            placeholderTextColor={themeStyles.colors.secondary}
             value={query}
             onChangeText={setQuery}
             autoFocus={true}
@@ -343,24 +348,27 @@ const SearchResultsScreen = () => {
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={() => setQuery('')}>
-              <Icon name="close-circle" size={20} color="#777" />
+              <Icon name="close-circle" size={20} color={themeStyles.colors.secondary} />
             </TouchableOpacity>
           )}
         </View>
       </View>
-      
-      {/* Tabs */}
-      <View style={styles.tabsContainer}>
+        {/* Tabs */}
+      <View style={[styles.tabsContainer, { borderBottomColor: themeStyles.colors.border }]}>
         {TABS.map((tab) => (
           <TouchableOpacity
             key={tab}
             style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}
             onPress={() => handleTabChange(tab)}
           >
-            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+            <Text style={[
+              styles.tabText, 
+              { color: themeStyles.colors.secondary },
+              activeTab === tab && { color: themeStyles.colors.text, fontWeight: '600' }
+            ]}>
               {tab}
             </Text>
-            {activeTab === tab && <View style={styles.activeTabIndicator} />}
+            {activeTab === tab && <View style={[styles.activeTabIndicator, { backgroundColor: themeStyles.colors.primary }]} />}
           </TouchableOpacity>
         ))}
       </View>
@@ -374,7 +382,6 @@ const SearchResultsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
   },
   header: {
     flexDirection: 'row',
@@ -382,7 +389,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#222',
   },
   backButton: {
     padding: 8,
@@ -392,14 +398,12 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#222',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   searchInput: {
     flex: 1,
-    color: '#fff',
     fontSize: 16,
     padding: 0,
     height: 24,
@@ -408,7 +412,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#222',
   },
   tabButton: {
     paddingVertical: 12,
@@ -417,12 +420,10 @@ const styles = StyleSheet.create({
   },
   activeTabButton: {},
   tabText: {
-    color: '#888',
     fontSize: 16,
     fontWeight: '500',
   },
   activeTabText: {
-    color: '#fff',
     fontWeight: '600',
   },
   activeTabIndicator: {
@@ -431,7 +432,6 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     height: 2,
-    backgroundColor: '#1DB954',
     borderRadius: 1,
   },
   scrollView: {
@@ -447,7 +447,6 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   messageText: {
-    color: '#777',
     fontSize: 16,
     marginTop: 12,
     textAlign: 'center',
@@ -462,12 +461,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
   seeAllText: {
-    color: '#1DB954',
     fontSize: 14,
   },
   trackItem: {
@@ -487,17 +484,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
   },
   trackTitle: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 4,
   },
   trackArtist: {
-    color: '#888',
     fontSize: 14,
   },
   trackDuration: {
-    color: '#888',
     fontSize: 14,
   },
   albumItem: {
@@ -510,13 +504,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   albumTitle: {
-    color: '#fff',
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 2,
   },
   albumArtist: {
-    color: '#888',
     fontSize: 12,
   },
   playlistItem: {
@@ -536,17 +528,14 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   playlistTitle: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 4,
   },
   playlistDesc: {
-    color: '#888',
     fontSize: 14,
   },
   placeholderImage: {
-    backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -555,7 +544,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   topResultTitle: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
@@ -570,7 +558,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   artistName: {
-    color: '#fff',
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',

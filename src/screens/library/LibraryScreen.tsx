@@ -148,12 +148,12 @@ export default function LibraryScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, { color: themeStyles.colors.text }]}>Library</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.proButton}>
+          {/* <TouchableOpacity style={styles.proButton}>
             <Text style={styles.proButtonText}>GET PRO</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
             <Ionicons name="tv-outline" size={24} color={themeStyles.colors.icon} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           {/* <TouchableOpacity 
             style={styles.iconButton}
             onPress={() => navigation.navigate('Settings')}
@@ -198,7 +198,7 @@ export default function LibraryScreen() {
           title="Playlists" 
           onPress={() => navigation.navigate('OwnPlaylists')} 
         />
-        <LibraryItem 
+        {/* <LibraryItem 
           title="Albums" 
           onPress={() => navigation.navigate('Albums')} 
         />
@@ -213,7 +213,7 @@ export default function LibraryScreen() {
         <LibraryItem 
           title="Your uploads" 
           onPress={() => navigation.navigate('YourUploads')} 
-        />
+        /> */}
 
         {/* Listening History Section */}
         <View style={styles.historySection}>

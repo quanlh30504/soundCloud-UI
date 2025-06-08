@@ -39,17 +39,17 @@ const LyricsScreen: React.FC<LyricsScreenProps> = ({
       animationType="slide"
       transparent={false}
       onRequestClose={onClose}
-    >
-      <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.background }]}>
+    >      
+    <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.background }]}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: themeStyles.secondary }]}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <View style={styles.closeButtonCircle}>
-              <Ionicons name="close" size={20} color="#FFF" />
+            <View style={[styles.closeButtonCircle, { borderColor: themeStyles.secondary }]}>
+              <Ionicons name="close" size={20} color={themeStyles.text} />
             </View>
           </TouchableOpacity>
           
-          <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>Lyrics</Text>
+          <Text style={[styles.headerTitle, { color: themeStyles.text }]}>Lyrics</Text>
           
           <View style={{ width: 32 }} />
         </View>
@@ -70,7 +70,7 @@ const LyricsScreen: React.FC<LyricsScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
+  },  
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -78,7 +78,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: '#333',
   },
   closeButton: {
     padding: 4,
@@ -88,7 +87,6 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#666',
     justifyContent: 'center',
     alignItems: 'center',
   },
