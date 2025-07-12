@@ -1,76 +1,78 @@
 import axiosInstance from '../config/axios';
 import { User } from '../types/user';
+import { CreatePlaylistDTO, PagedResponse, Playlist, Track } from '../types/playlist';
+import { SongData, Artist, Album,
+  Genre, Composer, StreamData,
+  SyncResponse, Top100, HubDetail,
+  ChartHomeData, ChartItemInfo, WeekChartInfo, RecommendKeyword, AcSuggestions } from '../types/zing';
+import { HistoryPage, ListeningHistoryDTO } from '../types/history';
+import { storageService } from '../services/storage';
+import { updateProfile } from 'firebase/auth';
+
+type UpdateProfile = {
+  displayName?: string;
+  avatarUrl?: string;
+}
 
 // User API
 export const userApi = {
   // Lấy thông tin user
-  getProfile: () => axiosInstance.get('/users/profile'),
+  getProfile: () => axiosInstance.get<User>('/users/me'),
   
   // Cập nhật thông tin user
-  updateProfile: (data: any) => axiosInstance.put('/users/profile', data),
+  updateProfile: (data: UpdateProfile) => axiosInstance.put<User>('/users/profile', data),
   
-  // Lấy danh sách bài hát đã thích
-  getLikedTracks: () => axiosInstance.get('/users/liked-tracks'),
+  // // Lấy danh sách bài hát đã thích
+  // getLikedTracks: () => axiosInstance.get('/users/liked-tracks'),
   
-  // Lấy danh sách playlist
-  getPlaylists: () => axiosInstance.get('/users/playlists'),
+  // // Lấy danh sách playlist
+  // getPlaylists: () => axiosInstance.get('/users/playlists'),
   
-  // Lấy danh sách người theo dõi
-  getFollowing: () => axiosInstance.get('/users/following'),
-};
-
-// Track API
-export const trackApi = {
-  // Lấy danh sách track
-  getTracks: (params?: any) => axiosInstance.get('/tracks', { params }),
-  
-  // Lấy thông tin chi tiết track
-  getTrackById: (id: string) => axiosInstance.get(`/tracks/${id}`),
-  
-  // Tạo track mới
-  createTrack: (data: any) => axiosInstance.post('/tracks', data),
-  
-  // Cập nhật track
-  updateTrack: (id: string, data: any) => axiosInstance.put(`/tracks/${id}`, data),
-  
-  // Xóa track
-  deleteTrack: (id: string) => axiosInstance.delete(`/tracks/${id}`),
-  
-  // Like/Unlike track
-  toggleLike: (id: string) => axiosInstance.post(`/tracks/${id}/toggle-like`),
+  // // Lấy danh sách người theo dõi
+  // getFollowing: () => axiosInstance.get('/users/following'),
 };
 
 // Playlist API
 export const playlistApi = {
-  // Lấy danh sách playlist
-  getPlaylists: (params?: any) => axiosInstance.get('/playlists', { params }),
+  // Get personal playlists
+  getOwnPlaylists: (page = 0, size = 20, sortBy = 'createdAt', direction = 'desc') => 
+    axiosInstance.get<PagedResponse<Playlist>>('/own-playlists/me', { 
+      params: { page, size, sortBy, direction } 
+    }),
   
-  // Lấy thông tin chi tiết playlist
-  getPlaylistById: (id: string) => axiosInstance.get(`/playlists/${id}`),
+  // Get details of a playlist
+  getOwnPlaylistById: (id: string) => 
+    axiosInstance.get<Playlist>(`/own-playlists/${id}`),
   
-  // Tạo playlist mới
-  createPlaylist: (data: any) => axiosInstance.post('/playlists', data),
+  // Get tracks in a playlist
+  getOwnPlaylistTracks: (playlistId: string, page = 0, size = 20, sortBy = 'name', direction = 'asc') => 
+    axiosInstance.get<PagedResponse<Track>>(`/own-playlists/${playlistId}/tracks`, { 
+      params: { page, size, sortBy, direction } 
+    }),
   
-  // Cập nhật playlist
-  updatePlaylist: (id: string, data: any) => axiosInstance.put(`/playlists/${id}`, data),
+  // Create a new playlist
+  createOwnPlaylist: (data: CreatePlaylistDTO) => 
+    axiosInstance.post<Playlist>('/own-playlists', data),
   
-  // Xóa playlist
-  deletePlaylist: (id: string) => axiosInstance.delete(`/playlists/${id}`),
+  // Add track to a playlist
+  addTrackToOwnPlaylist: (playlistId: string, spotifyId: string) => 
+    axiosInstance.post(`/own-playlists/${playlistId}/tracks/${spotifyId}`),
   
-  // Thêm track vào playlist
-  addTrackToPlaylist: (playlistId: string, trackId: string) => 
-    axiosInstance.post(`/playlists/${playlistId}/tracks/${trackId}`),
+  // Remove track from a playlist
+  removeTrackFromOwnPlaylist: (playlistId: string, trackId: number) => 
+    axiosInstance.delete(`/own-playlists/${playlistId}/tracks/${trackId}`),
   
-  // Xóa track khỏi playlist
-  removeTrackFromPlaylist: (playlistId: string, trackId: string) => 
-    axiosInstance.delete(`/playlists/${playlistId}/tracks/${trackId}`),
-};
+  // Delete a playlist
+  deleteOwnPlaylist: (playlistId: string) => 
+    axiosInstance.delete(`/own-playlists/${playlistId}`),
 
-// Search API
-export const searchApi = {
-  // Tìm kiếm
-  search: (query: string, params?: any) => 
-    axiosInstance.get('/search', { params: { q: query, ...params } }),
+  createOwnPlaylistFromExternalPlaylist: (externalPlaylistId: string) => {
+    return axiosInstance.post<Playlist>(`/own-playlists/from-external-playlist/${externalPlaylistId}`);
+  },
+
+  checkExternalPlaylistSaved: (externalPlaylistId: string) => {
+    return axiosInstance.get<boolean>(`/own-playlists/exist-external-playlist/${externalPlaylistId}`);
+  }
 };
 
 // Auth API
@@ -99,3 +101,186 @@ export const authApi = {
     }
   }
 }; 
+
+// =========================
+
+export const homeApi = {
+  getTop100: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/top100');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting top 100:', error);
+      throw error;
+    }
+  },
+
+  getHubDetailChill: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/hub-detail/chill');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting hub detail chill:', error);
+      throw error;
+    }
+  },
+
+  getRecommendSongs: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/recommend');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting recommend songs:', error);
+      throw error;
+    }
+  },
+   getNewRelease: async (type) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/new-release', {
+        params: { type },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting new release:', error);
+      throw error;
+    }
+   },
+   
+   getNewReleaseTop100: async () => {
+    try {
+      const response = await axiosInstance.get('zingMp3/home/new-release/top100');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting new release top 100:', error);
+      throw error;
+    }
+   },
+};
+
+export const artistApi = {
+  getArtistInfo: async (alias) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/artist/info', {
+        params: { alias},
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting artist info:', error);
+      throw error;
+    }
+  },
+
+  getArtistSongs: async (artistId, page = 1, count = 15) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/artist/songs', {
+        params: {artistId, page, count},
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting artist songs:', error);
+      throw error;
+    }
+  },
+
+  getArtistPlaylists: async (artistId, page = 1, count = 15) => {
+    try {
+      const response = await axiosInstance.get('zingMp3/artist/playlists', {
+        params: { artistId, page, count },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error getting artist playlists:', error);
+      throw error;
+    }
+  },
+};
+
+//============================
+export const trackApi = {
+  //Get track stream URL
+  getTrackStreamUrl: (trackId: string) => 
+    axiosInstance.get<StreamData>(`/zingMp3/song/streamUrl/${trackId}`),
+
+  //Get track info
+  getTrackInfo: (trackId: string) => 
+    axiosInstance.get<SongData>(`/zingMp3/song/info/${trackId}`),
+
+  //Get track lyrics
+  getTrackLyrics: (trackId: string) => 
+    axiosInstance.get<string>(`/zingMp3/song/lyrics/${trackId}`),
+
+  //Sync track to db (save record to db if not exist)
+  syncTrackToDb: (trackId: string) =>
+    axiosInstance.post(`/zingMp3/sync/${trackId}`),
+};
+
+type searchType = 'song' | 'playlist' | 'artist';
+
+// // Search API
+export const searchApi = {
+  //search all
+  searchAll: (query: string) => 
+    axiosInstance.get('/zingMp3/search/multi', { params: { query } }),
+
+  //search type
+  searchType: (query: string, type: searchType, page: number=0, size: number=20) => 
+    axiosInstance.get('/zingMp3/search', { params: { type, query, page, count: size } }),
+
+  getRecommendKeywords: () =>
+    axiosInstance.get<RecommendKeyword[]>('/zingMp3/recommend-keyword'),
+
+  getAcSuggestions: (query: string) =>
+    axiosInstance.get<AcSuggestions>('/zingMp3/ac-suggestions', { params: { query } })
+}
+
+// // Zing Playlist API
+export const zingPlaylistApi = {
+  //Get playlist info
+  getPlaylistInfo: (playlistId: string) => 
+    axiosInstance.get<Album>(`/zingMp3/playlist/info`, { params: { id: playlistId } }),
+};
+
+// // user-mics API
+export const userHistoryApi = {
+  //Add song to listen history
+  addSongToListenHistory: (trackId: string) => {
+    console.log('Adding song to listen history:', trackId);
+    return axiosInstance.post(`/zingMp3/history/${trackId}`);
+  },
+
+  //Get listen history
+  getListenHistory: (page: number=0, size: number=20) => 
+    axiosInstance.get(`/zingMp3/history`, { params: { page, size } }),
+
+  //Delete song from listen history
+  deleteListenHistory: () =>
+    axiosInstance.delete(`/zingMp3/history`),
+
+  //Delete song from listen history
+  deleteSongFromListenHistory: (trackId: string) => 
+    axiosInstance.delete(`/zingMp3/history/tracks/${trackId}`),
+};
+
+// // Liked tracks API
+export const likedTracksApi = {
+  //Add song to liked tracks
+  addSongToLikedTracks: (trackId: string) => 
+    axiosInstance.post(`/own-playlists/liked-tracks/${trackId}`),
+
+  //Get liked tracks
+  getLikedTracks: (page: number=0, size: number=100) => 
+    axiosInstance.get<PagedResponse<Track>>(`/own-playlists/liked-tracks`, { params: { page, size } }),
+
+  //Delete song from liked tracks
+  deleteSongFromLikedTracks: (trackId: string) => 
+    axiosInstance.delete(`/own-playlists/liked-tracks/${trackId}`),
+
+  isTrackInLikedTracks: (trackId: string) => 
+    axiosInstance.get<boolean>(`/own-playlists/liked-tracks/${trackId}/is-liked`),
+};
+
+
+export const chartApi = {
+  getChartHome: () => 
+    axiosInstance.get<ChartHomeData>('/zingMp3/chart-home'),
+};

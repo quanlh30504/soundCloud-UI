@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        touch-action: none; /* Disable touch interactions */
+        pointer-events: none; /* Disable all pointer events */
+      }
+
+      canvas {
+        display: block;
+        margin: 0;
+        padding: 0;
+        pointer-events: none; /* Disable canvas interactions */
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.10.2/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.10.2/addons/p5.sound.min.js"></script>
+		<script>
+
+			function externalLog(message) {
+				if (window.ReactNativeWebView) {
+					window.ReactNativeWebView.postMessage(message);
+				} else {
+					console.log(message);
+				}
+			}
+
+			document.addEventListener("DOMContentLoaded", function() {
+				externalLog("DOMContentLoaded");
+			});
+		</script>
+    <script>
+      var song;
+      var fft;
+      var particles = [];
+      var bassThreshold = 150; // Ngưỡng để kích hoạt hiệu ứng bass
+      var bassIntensity = 0; // Cường độ bass hiện tại (smooth)
+
+      // Particle class
+      class Particle {
+        constructor() {
+          // Spawn at bottom center and spread outward
+          this.pos = createVector(width/2, height);
+          let angle = random(-180, 0); // Wider spread angle (was -120, -60)
+          this.vel = p5.Vector.fromAngle(radians(angle)).mult(random(1, 3));
+          this.acc = createVector(0, -0.1); // Slight upward acceleration
+          
+          this.w = random(4, 8); // Increased size (was 2, 4)
+          this.color = color(random(200, 255), random(100, 200), random(0, 100), random(150, 255));
+          this.life = 1.0;
+          this.decay = random(0.005, 0.015);
+        }
+
+        update(bassHit) {
+          this.vel.add(this.acc);
+          this.pos.add(this.vel);
+          
+          // Move faster when bass hits
+          if (bassHit) {
+            this.pos.add(this.vel);
+            this.pos.add(this.vel);
+          }
+          
+          // Fade out over time
+          this.life -= this.decay;
+          this.color = color(red(this.color), green(this.color), blue(this.color), this.life * 255);
+        }
+
+        edges() {
+          return (this.pos.x < -50 || this.pos.x > width + 50 || 
+                  this.pos.y < -50 || this.pos.y > height + 50 || 
+                  this.life <= 0);
+        }
+
+        show() {
+          noStroke();
+          fill(this.color);
+          ellipse(this.pos.x, this.pos.y, this.w);
+        }
+      }
+
+      function preload() {
+      }
+
+      function setup() {
+        createCanvas(windowWidth-20, windowHeight); // Fixed height for integration
+        frameRate(60);
+
+        angleMode(DEGREES);
+        fft = new p5.FFT(0.1, 16384);
+      }
+
+      function draw() {
+        if (!song || !song.isLoaded()) {
+          // Show placeholder when no audio
+          background("#121212");
+          fill(50);
+          noStroke();
+          for (let i = 0; i < 32; i++) {
+            let x = i * (width / 32);
+            let barHeight = 5;
+            rect(x, height - barHeight, width / 32 - 2, barHeight);
+          }
+          return;
+        }
+
+        draw4();
+      }
+
+      function smoothSpectrum(data, size = 5) {
+        let result = [];
+        for (let i = 0; i < data.length; i++) {
+          let sum = 0;
+          let count = 0;
+          for (let j = -size; j <= size; j++) {
+            let index = constrain(i + j, 0, data.length - 1);
+            sum += data[index];
+            count++;
+          }
+          result[i] = sum / count;
+        }
+        return result;
+      }
+
+      // Message handler for external commands
+      function handleMessage(event) {
+        const data = JSON.parse(event.data);
+				// externalLog(`Received message: ${data.type}`);
+        switch (data.type) {
+          case "LOAD_AUDIO":
+            externalLog(`Loading audio with URL: ${data.url}, isPlaying: ${data.isPlaying}`);
+            loadAudioUrl(data.url);
+            break;
+          case "PLAY":
+            if (song && song.isLoaded() && !song.isPlaying()) {
+              externalLog(`Playing audio`);
+              song.play();
+              loop();
+            }
+            break;
+          case "PAUSE":
+            if (song) {
+              externalLog(`Pausing audio`);
+              song.pause();
+              noLoop();
+            }
+            break;
+          case "SEEK":
+            if (song && song.isLoaded()) {
+              if (Math.abs(song.currentTime() - data.position) > 0.3) {
+								externalLog(`Seeking from ${song.currentTime()} to ${data.position}`);
+                song.jump(data.position + 0.1);
+                if (!data.isPlaying) {
+                  song.pause();
+                  noLoop();
+                }
+              }
+            }
+            break;
+          case "SET_VOLUME":
+            if (song) {
+              song.setVolume(data.volume);
+            }
+            break;
+        }
+      }
+
+      // Listen for messages from React Native
+      window.addEventListener("message", handleMessage);
+      document.addEventListener("message", handleMessage);
+
+      // function loadAudioUrl(url) {
+      //   if (song) {
+      //     song.stop();
+      //   }
+			// 	externalLog(`Loading audio from URL: ${url}`);
+      //   song = loadSound(
+      //     url,
+      //     () => {
+			// 			externalLog("Audio loaded successfully");
+      //       song.setVolume(0.4);
+      //     },
+      //     (error) => {
+      //       externalLog(`Error loading audio: ${error}`);
+      //     }
+      //   );
+      // }
+
+      function loadAudioUrl(url) {
+        if (song) {
+          song.stop();
+        }
+
+        externalLog(`Loading audio from URL: ${url}`);
+        song = loadSound(
+          url,
+          () => {
+            externalLog("Audio loaded successfully");
+
+            // MUTE BẰNG gainNode thay vì setVolume
+            const audioCtx = getAudioContext();
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0.0; // âm lượng = 0 nhưng vẫn phân tích được FFT
+
+            song.disconnect();         // Ngắt kết nối mặc định
+            song.connect(gainNode);    // Kết nối vào gainNode
+            gainNode.connect(audioCtx.destination); // Gửi âm thanh tới đầu ra (đã mute)
+            fft.setInput(song);
+          },
+          (error) => {
+            externalLog(`Error loading audio: ${error}`);
+          }
+        );
+      }
+    </script>
+    <script>
+      // Disable mouse interactions
+      function mouseClicked() {
+        // Do nothing - disabled
+      }
+
+      function mousePressed() {
+        // Do nothing - disabled
+      }
+
+      // DRAW DEFINE HERE
+      function draw4() {
+        var numBars = Math.min(32, Math.floor(width / 10));
+        var barHeightMultiplier = 1;
+        var minHeight = 3;
+        var binStart = 4;
+        var binEnd = 8100;
+        var spectrumScale = 2.5;
+
+        background("#121212");
+        
+        let spectrum = fft.analyze();
+        var bassEnergy = fft.getEnergy("bass");
+        
+        // Smooth bass intensity for better visual effect
+        bassIntensity = lerp(bassIntensity, bassEnergy, 0.3);
+        
+        // Calculate bass boost effect
+        let bassBoost = bassIntensity > bassThreshold ? map(bassIntensity, bassThreshold, 255, 1, 2.5) : 1;
+        let isBassHit = bassIntensity > bassThreshold;
+        
+        // Add subtle background glow when bass hits
+        if (isBassHit) {
+          fill(255, 100, 0, 30);
+          noStroke();
+          ellipse(width/2, height, width * 1.5, height * 2);
+        }
+
+        // Spawn new particles occasionally
+        if (frameCount % 3 === 0) {
+          particles.push(new Particle());
+        }
+        
+        // Draw particles (behind bars)
+        for (let i = particles.length - 1; i >= 0; i--) {
+          if (!particles[i].edges()) {
+            particles[i].update(bassEnergy > 200);
+            particles[i].show();
+          } else {
+            particles.splice(i, 1);
+          }
+        }
+        
+        noStroke();
+        let barWidth = width / numBars;
+
+        for (let i = 0; i < numBars; i++) {
+          let t = i / (numBars - 1);
+          let logIndex = pow(t, spectrumScale) * (binEnd - binStart) + binStart;
+          let index = floor(logIndex);
+
+          let rawBarHeight = spectrum[index] * barHeightMultiplier;
+          
+          // Emphasize bass frequencies (first 25% of bars)
+          let isBassBar = i < numBars * 0.25;
+          let barHeight = max(rawBarHeight, minHeight);
+          
+          if (isBassBar && isBassHit) {
+            // Bass bars get extra height boost
+            barHeight *= bassBoost;
+          }
+          
+          let x = i * barWidth;
+          let y = height - barHeight;
+          
+          // Dynamic colors based on bass energy and bar position
+          if (isBassBar) {
+            if (isBassHit) {
+              // Intense bass colors - red to orange gradient
+              let intensity = map(bassIntensity, bassThreshold, 255, 0, 1);
+              fill(255, 100 - intensity * 50, 0);
+            } else {
+              // Normal bass bars - orange
+              fill(255, 150, 0);
+            }
+          } else {
+            // Mid/high frequency bars
+            if (isBassHit) {
+              // Slightly affected by bass
+              fill(255, 180, 50);
+            } else {
+              // Normal color
+              fill(255, 100, 0);
+            }
+          }
+          
+          // Add slight tilt effect for bass bars when bass hits
+          if (isBassBar && isBassHit) {
+            push();
+            translate(x + barWidth/2, height);
+            rotate(sin(frameCount * 2) * 5); // Subtle oscillation
+            rect(-barWidth/2, -barHeight, barWidth - 4, barHeight);
+            pop();
+          } else {
+            rect(x, y, barWidth - 4, barHeight);
+          }
+          
+          // Add top glow for high bars
+          if (barHeight > height * 0.3) {
+            fill(255, 255, 255, 100);
+            rect(x, y, barWidth - 4, 2);
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

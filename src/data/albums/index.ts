@@ -1,0 +1,50 @@
+export const albums = [
+    {
+      id: "album1",
+      title: "Greatest Hits",
+      artist: "Artist Name",
+      coverArt: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
+      tracks: [
+        {
+          id: "track1",
+          url: require("../../../assets/music/BauTroiMoi.mp3"),
+          title: "Bau Troi Moi",
+          artist: "Artist Name",
+          artwork: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
+          duration: 230,
+        },
+        {
+          id: "track2",
+          url: require("../../../assets/music/ThatTinh.mp3"),
+          title: "That Tinh",
+          artist: "Artist Name",
+          artwork: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
+          duration: 230,
+        },
+        {
+          id: "track3",
+          url: require("../../../assets/music/BauTroiMoi.mp3"),
+          title: "Bau Troi Moi",
+          artist: "Artist Name",
+          artwork: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
+          duration: 230,
+        },
+        {
+          id: "track4",
+          url: require("../../../assets/music/ThatTinh.mp3"),
+          title: "Yeu bao lau",
+          artist: "Artist Name",
+          artwork: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
+          duration: 230,
+        },
+        {
+          id: "track5",
+          url: require("../../../assets/music/ThatTinh.mp3"),
+          title: "Yeu bao lau thi cuoi",
+          artist: "Artist 5",
+          artwork: "https://i.scdn.co/image/ab67616d0000b2737b7c31fa8f6fd3dd8dae2819",
+          duration: 230,
+        },
+      ],
+    },
+  ];

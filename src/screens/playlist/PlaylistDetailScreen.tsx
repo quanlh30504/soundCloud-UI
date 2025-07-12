@@ -1,0 +1,587 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Image, 
+  FlatList,
+  ActivityIndicator,
+  Alert
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../../contexts/ThemeContext';
+import { darkTheme, lightTheme } from '../../config/theme';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { trackApi, zingPlaylistApi, playlistApi } from '../../services/api';
+import { Playlist, Track } from '../../types/playlist';
+import trackPlayerService from '../../services/player/TrackPlayerService';
+import MoreOptionsMenu from '../../components/common/MoreOptionsMenu';
+import { Album, SongData } from '../../types/zing';
+import TrackPlayer from 'react-native-track-player';
+
+export default function PlaylistDetailScreen() {
+  const { theme } = useTheme();
+  const themeStyles = theme === 'dark' ? darkTheme : lightTheme;
+  const navigation = useNavigation();  const route = useRoute();
+  const playlistId = (route.params as { playlistId: string })?.playlistId;
+
+  const [playlist, setPlaylist] = useState<Album | null>(null);
+  const [tracks, setTracks] = useState<SongData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [moreOptionsVisible, setMoreOptionsVisible] = useState(false);
+  const [selectedTrack, setSelectedTrack] = useState<SongData | null>(null);
+  const [isSelectedTrackLiked, setIsSelectedTrackLiked] = useState<boolean>(false);
+  const [removingTrack, setRemovingTrack] = useState<boolean>(false);
+  const [savingPlaylist, setSavingPlaylist] = useState<boolean>(false);
+  const [isPlaylistSaved, setIsPlaylistSaved] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (playlistId) {
+      fetchPlaylistDetails(playlistId);
+    }
+  }, [playlistId]);
+
+  useEffect(() => {
+    if (playlist?.encodeId) {
+      checkPlaylistSavedStatus(playlist.encodeId);
+    }
+  }, [playlist]);
+
+  const fetchPlaylistDetails = async (playlistId: string) => {
+    setLoading(true);
+    try {
+      
+      const playlistResponse = (await zingPlaylistApi.getPlaylistInfo(playlistId)).data;
+      setPlaylist(playlistResponse);
+      setTracks(playlistResponse.song?.items || []);
+    } catch (error) {
+      console.error('Error fetching playlist details:', error);
+      Alert.alert('Error', 'Failed to load playlist. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkPlaylistSavedStatus = async (playlistId: string) => {
+    try {
+      const response = await playlistApi.checkExternalPlaylistSaved(playlistId);
+      setIsPlaylistSaved(response.data);
+    } catch (error) {
+      console.error('Error checking playlist saved status:', error);
+    }
+  };
+
+  const checkLikeStatus = async (track: SongData) => {
+    if (track?.encodeId) {
+      const liked = await trackPlayerService.isTrackLiked(track.encodeId);
+      console.log("Track ID:", track.encodeId, "is liked:", liked);
+      setIsSelectedTrackLiked(liked);
+    }
+  };
+
+  const handleLikeToggle = async () => {
+    if (!selectedTrack?.encodeId) return;
+    console.log("Toggling like status for track ID:", selectedTrack.encodeId);
+    const isSuccess = await trackPlayerService.toggleLikeTrack(selectedTrack.encodeId);
+    if (isSuccess) {
+      setIsSelectedTrackLiked(!isSelectedTrackLiked);
+    } else {
+      console.error("Failed to toggle like status");
+    }
+  };
+
+  const handleRefresh = async () => {
+    if (playlist?.encodeId) {
+      setRefreshing(true);
+      await fetchPlaylistDetails(playlist.encodeId);
+      setRefreshing(false);
+    }
+  };
+
+  const handlePlayAll = () => {
+    if (tracks.length > 0) {
+      playTracks(tracks);
+    }
+  };
+
+  const handlePlayShuffle = () => {
+    if (tracks.length > 0) {
+      // Create a shuffled copy of the tracks
+      const shuffledTracks = [...tracks].sort(() => Math.random() - 0.5);
+      playTracks(shuffledTracks);
+    }
+  };
+
+  // const playTracks = async (tracksToPlay: SongData[]) => {
+  //   try {
+  //     const urls = await Promise.all(
+  //       tracksToPlay.map(track => trackApi.getTrackStreamUrl(track.encodeId))
+  //     );
+  //     const trackPlayerTracks = tracksToPlay.map((track, idx) => ({
+  //       id: track.encodeId,
+  //       url: String(urls[idx]),
+  //       title: track.title,
+  //       artist: track.artistsNames,
+  //       artwork: track.thumbnailM,
+  //     }));
+      
+  //     await trackPlayerService.setQueue(trackPlayerTracks);
+  //   } catch (error) {
+  //     console.error('Error playing tracks:', error);
+  //     Alert.alert('Error', 'Failed to play tracks. Please try again.');
+  //   }
+  // };
+
+  const playTracks = async (tracksToPlay: SongData[]) => {
+    trackPlayerService.setQueue([]);
+    try {
+      let first = true;
+      for (const track of tracksToPlay) {
+        try {
+          const url = (await trackApi.getTrackStreamUrl(track.encodeId)).data;
+
+          const playerTrack = {
+            id: track.encodeId,
+            url: String(url?.[320] || url?.[128]),
+            title: track.title,
+            artist: track.artistsNames,
+            artwork: track.thumbnailM,
+          };
+
+          await trackPlayerService.addTracks([playerTrack]);
+          if (first) {
+            await TrackPlayer.play();
+            first = false;
+          }
+        } catch (err) {
+          console.warn(`Failed to load track ${track.encodeId}:`, err);
+        }
+
+        await sleep(200); // nghỉ một chút để tránh rate limit
+      }
+    } catch (error) {
+      console.error('Error playing tracks:', error);
+      Alert.alert('Error', 'Failed to load playlist.');
+    }
+  };
+
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const handleTrackPress = (track: SongData, index: number) => {
+    // Play this track and queue the rest
+    const tracksToPlay = [...tracks.slice(index), ...tracks.slice(0, index)];
+    playTracks(tracksToPlay);
+  };
+
+  const handleMoreOptionsPress = () => {
+    setMoreOptionsVisible(true);
+  };
+
+  const handleTrackMoreOptionsPress = (track: SongData) => {
+    setSelectedTrack(track);
+    checkLikeStatus(track);
+    setMoreOptionsVisible(true);
+  };
+
+  const handleCloseMoreOptions = () => {
+    setMoreOptionsVisible(false);
+  };
+
+//   const handleRemoveTrackFromPlaylist = async (trackId: number) => {
+//     if (!playlist?.encodeId) return;
+    
+//     setRemovingTrack(true);
+//     try {
+//       await playlistApi.removeTrackFromOwnPlaylist(playlist.id, trackId);
+      
+//       // Update the local state to reflect the removal
+//       setTracks(tracks.filter(track => track.id !== trackId));
+      
+//       // Update the playlist totalTracks count
+//       if (playlist) {
+//         setPlaylist({
+//           ...playlist,
+//           totalTracks: playlist.totalTracks - 1
+//         });
+//       }
+      
+//       // Close the more options menu
+//       handleCloseMoreOptions();
+//       setSelectedTrack(null);
+      
+//       // Show success message
+//       Alert.alert('Success', 'Track removed from playlist successfully');
+//     } catch (error) {
+//       console.error('Error removing track from playlist:', error);
+//       Alert.alert('Error', 'Failed to remove track from playlist. Please try again.');
+//     } finally {
+//       setRemovingTrack(false);
+//     }
+//   };
+
+  const handleSavePlaylist = async () => {
+    if (!playlist?.encodeId) return;
+    
+    setSavingPlaylist(true);
+    try {
+      await playlistApi.createOwnPlaylistFromExternalPlaylist(playlist.encodeId);
+      setIsPlaylistSaved(true);
+      setMoreOptionsVisible(false);
+      Alert.alert('Success', 'Playlist saved to your library successfully!');
+    } catch (error) {
+      console.error('Error saving playlist:', error);
+      Alert.alert('Error', 'Failed to save playlist. Please try again.');
+    } finally {
+      setSavingPlaylist(false);
+    }
+  };
+
+  const handleAddToPlaylist = async () => {
+    if (!selectedTrack) return;
+    
+    // Close the more options menu
+    setMoreOptionsVisible(false);
+    
+    // Navigate to AddToPlaylist screen with track info
+    (navigation as any).navigate('AddToPlaylist', {
+      trackId: selectedTrack.encodeId,
+      trackName: selectedTrack.title,
+      artistName: selectedTrack.artistsNames || selectedTrack.artists?.join(', '),
+      trackArtwork: selectedTrack.thumbnailM
+    });
+  };
+
+  const formatDuration = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const renderTrackItem = ({ item, index }: { item: SongData, index: number }) => {
+    // Default image or placeholder
+    const thumbnailUrl = item.thumbnailM;
+
+    return (
+      <TouchableOpacity 
+        style={styles.trackItem}
+        onPress={() => handleTrackPress(item, index)}
+      >
+        <Image 
+          source={{ uri: thumbnailUrl }}
+          style={styles.trackThumbnail}
+        />
+        <View style={styles.trackInfo}>
+          <Text style={[styles.trackName, { color: themeStyles.colors.text }]} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <Text style={[styles.artistName, { color: themeStyles.colors.secondary }]} numberOfLines={1}>
+            {item.artistsNames}
+          </Text>
+          <Text style={[styles.trackDuration, { color: themeStyles.colors.secondary }]}>
+            {formatDuration(item.duration*1000)}
+          </Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.moreButton}
+          onPress={() => handleTrackMoreOptionsPress(item)}
+        >
+          <Ionicons name="ellipsis-vertical" size={20} color={themeStyles.colors.secondary} />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    );
+  };
+
+  // Default playlist cover image
+  const coverImageUrl = playlist?.thumbnailM || 'https://fakeimg.pl/360x360';
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: themeStyles.colors.background }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color={themeStyles.colors.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: themeStyles.colors.text }]}>Playlist</Text>
+      </View>
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={themeStyles.colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={tracks}
+          renderItem={renderTrackItem}
+          keyExtractor={(item) => item.encodeId.toString()}
+          ListHeaderComponent={
+            <View>
+              {/* Playlist Info Section */}
+              <View style={styles.playlistInfoContainer}>
+                <Image 
+                  source={{ uri: coverImageUrl }}
+                  style={styles.coverImage}
+                />
+                <View style={styles.playlistTextInfo}>
+                  <Text style={[styles.playlistName, { color: themeStyles.colors.text }]}>
+                    {playlist?.title}
+                  </Text>
+                  <Text style={[styles.playlistType, { color: themeStyles.colors.secondary }]}>
+                    Playlist
+                  </Text>
+                  <Text style={[styles.playlistOwner, { color: themeStyles.colors.secondary }]}>
+                    By {playlist?.artistsNames}
+                  </Text>
+                </View>
+              </View>
+              
+              {/* Action Buttons */}
+              <View style={styles.actionButtonsContainer}>
+                <TouchableOpacity 
+                  style={styles.menuButton}
+                  onPress={handleMoreOptionsPress}
+                >
+                  <Ionicons name="ellipsis-horizontal" size={24} color={themeStyles.colors.text} />
+                </TouchableOpacity>
+                
+                <View style={styles.playButtons}>
+                  <TouchableOpacity 
+                    style={styles.shuffleButton}
+                    onPress={handlePlayShuffle}
+                  >
+                    <Ionicons name="shuffle" size={24} color={themeStyles.colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.playButton}
+                    onPress={handlePlayAll}
+                  >
+                    <Ionicons name="play" size={24} color={themeStyles.colors.text} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              {/* Tracks Header */}
+              {tracks.length > 0 && (
+                <View style={styles.tracksHeader}>
+                  <Text style={[styles.tracksHeaderText, { color: themeStyles.colors.text }]}>
+                    {playlist?.song?.total} {playlist?.song?.total === 1 ? 'track' : 'tracks'}
+                  </Text>
+                </View>
+              )}
+            </View>
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyTracksContainer}>
+              <Text style={[styles.emptyTracksText, { color: themeStyles.colors.secondary }]}>
+                No tracks in this playlist yet.
+              </Text>
+            </View>
+          }
+          contentContainerStyle={styles.listContent}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
+        />
+      )}      
+      {/* More Options Menu for Playlist */}
+      {playlist && !selectedTrack && (
+        <MoreOptionsMenu
+          visible={moreOptionsVisible}
+          onClose={handleCloseMoreOptions}
+          title={playlist.title}
+          subtitle={playlist.artistsNames}
+          thumbnailUrl={coverImageUrl}
+          options={[            { 
+              icon: isPlaylistSaved ? 'checkmark-circle' : 'bookmark-outline', 
+              label: isPlaylistSaved ? 'Saved to library' : (savingPlaylist ? 'Saving...' : 'Save to library'), 
+              onPress: isPlaylistSaved ? () => {} : handleSavePlaylist,
+              disabled: isPlaylistSaved || savingPlaylist
+            },
+            { 
+              icon: 'share-outline', 
+              label: 'Share', 
+              onPress: () => console.log('Share playlist', playlist.encodeId) 
+            },
+            { 
+              icon: 'download-outline', 
+              label: 'Download', 
+              onPress: () => console.log('Download playlist', playlist.encodeId) 
+            }
+          ]}
+        />
+      )}
+      
+      {/* More Options Menu for Track */}
+      {selectedTrack && (
+        <MoreOptionsMenu
+          visible={moreOptionsVisible}
+          onClose={() => {
+            handleCloseMoreOptions();
+            setSelectedTrack(null);
+          }}
+          title={selectedTrack.title}
+          subtitle={selectedTrack.artists.join(', ')}
+          thumbnailUrl={selectedTrack.thumbnailM}
+          options={[
+            { 
+              icon: isSelectedTrackLiked ? 'heart' : 'heart-outline', 
+              label: isSelectedTrackLiked ? 'Unlike' : 'Like', 
+              onPress: handleLikeToggle 
+            },
+            { 
+              icon: 'share-outline', 
+              label: 'Share', 
+              onPress: () => console.log('Share track', selectedTrack.encodeId) 
+            },
+            { 
+              icon: 'add-outline', 
+              label: 'Add to playlist', 
+              onPress: handleAddToPlaylist 
+            },
+            { 
+              icon: 'download-outline', 
+              label: 'Download', 
+              onPress: () => console.log('Download track', selectedTrack.encodeId) 
+            },
+          ]}
+        />
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingTop: 0,
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginLeft: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContent: {
+    paddingBottom: 70, // Increased bottom padding to account for tab bar
+    flexGrow: 1,
+  },
+  playlistInfoContainer: {
+    flexDirection: 'row',
+    padding: 16,
+    alignItems: 'center',
+  },
+  coverImage: {
+    width: 120,
+    height: 120,
+    borderWidth: 1,
+    borderColor: '#525252',
+    borderRadius: 1,
+  },
+  playlistTextInfo: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  playlistName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  playlistType: {
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  playlistOwner: {
+    fontSize: 14,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  menuButton: {
+    padding: 8,
+  },
+  playButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  shuffleButton: {
+    padding: 8,
+    marginRight: 16,
+  },
+  playButton: {
+    padding: 8,
+  },
+  tracksHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#333333',
+    marginTop: 8,
+  },
+  tracksHeaderText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  trackItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  trackThumbnail: {
+    width: 50,
+    height: 50,
+    borderRadius: 2,
+  },
+  trackInfo: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'center',
+  },
+  trackName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  artistName: {
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  trackDuration: {
+    fontSize: 12,
+  },
+  moreButton: {
+    padding: 8,
+  },
+  emptyTracksContainer: {
+    padding: 32,
+    paddingBottom: 80, // Increased padding to account for tab bar
+    alignItems: 'center',
+  },
+  emptyTracksText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+});

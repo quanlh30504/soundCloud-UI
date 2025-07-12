@@ -52,7 +52,7 @@ export default function LoginScreen({ navigation, setAuthenticated }: { navigati
       };
       await storageService.setUserData(userData);
 
-      await authApi.syncUser(userData);
+      // await authApi.syncUser(userData);
 
       setAuthenticated(true);
     } catch (error: any) {
@@ -90,7 +90,7 @@ export default function LoginScreen({ navigation, setAuthenticated }: { navigati
       };
       await storageService.setUserData(userData);
 
-      await authApi.syncUser(userData);
+      // await authApi.syncUser(userData);
 
       setAuthenticated(true);
     } catch (error: any) {

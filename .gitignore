@@ -1,5 +1,8 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+#ide
+.vscode/
+
 # dependencies
 node_modules/
 
@@ -8,6 +11,10 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+/android/
+!/modules/widget/android/
+/modules/widget/android/build/
+ios/
 
 # Native
 *.orig.*
@@ -34,3 +41,6 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+REQUEST.md
+des.md
+zing.md
